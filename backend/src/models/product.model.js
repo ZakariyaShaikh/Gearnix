@@ -131,3 +131,23 @@ export const getProductDetail = async (productId) => {
         images: rows[2]
     };
 };
+
+export const deleteProductImage = async (productId, imageId) => {
+    const [rows] = await pool.query('CALL sp_delete_product_image(?, ?)', [
+        productId,
+        imageId
+    ]);
+
+    // One row: deleted_image_url (null if nothing matched), new_primary_image_id
+    return rows[0][0];
+};
+
+export const setPrimaryProductImage = async (productId, imageId) => {
+    const [rows] = await pool.query('CALL sp_set_primary_product_image(?, ?)', [
+        productId,
+        imageId
+    ]);
+
+    // One result set: the product's images, primary first
+    return rows[0];
+};

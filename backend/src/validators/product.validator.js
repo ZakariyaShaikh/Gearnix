@@ -299,3 +299,17 @@ export const validateProductListQuery = (req, res, next) => {
 
     next();
 };
+
+export const validateImageIdParam = (req, res, next) => {
+    const imageId = Number(req.params.imageId);
+
+    if (!Number.isInteger(imageId) || imageId <= 0) {
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid image ID'
+        });
+    }
+
+    req.params.imageId = imageId;
+    next();
+};

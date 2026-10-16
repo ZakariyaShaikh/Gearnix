@@ -5,7 +5,9 @@ import {
     updateUserPassword,
     updateUserProfileImage,
     getAccountDeletionInfo,
-    softDeleteUser
+    softDeleteUser,
+    listUsers,
+    changeUserRole
 } from '../models/user.model.js';
 import { hashPassword, comparePassword } from '../utils/password.utils.js';
 import {
@@ -150,5 +152,71 @@ export const deleteAccountService = async (userId, password) => {
         const error = new Error('User not found');
         error.statusCode = 404;
         throw error;
+    }
+};
+
+export const listUsersService = async ({ roleId, search, page, limit }) => {
+    const offset = (page - 1) * limit;
+
+    const { total, items } = await listUsers({
+        roleId,
+        search,
+        limit,
+        offset
+    });
+
+    return {
+        items,
+        pagination: {
+            page,
+            limit,
+            total,
+            total_pages: Math.ceil(total / limit)
+        }
+    };
+};
+
+// Maps the procedure's SIGNAL messages to HTTP responses
+const ROLE_CHANGE_ERRORS = {
+    SELF_ROLE_CHANGE: { statusCode: 403, message: 'You cannot change your own role' },
+    USER_NOT_FOUND: { statusCode: 404, message: 'User not found' },
+    ROLE_NOT_FOUND: { statusCode: 400, message: 'Role does not exist' },
+    ROLE_INACTIVE: { statusCode: 400, message: 'This role is inactive and cannot be assigned' },
+    SAME_ROLE: { statusCode: 409, message: 'User already has this role' },
+    LAST_ROLE_MANAGER: {
+        statusCode: 409,
+        message: 'Cannot remove the last user who can manage roles'
+    }
+};
+
+export const changeUserRoleService = async (targetUserId, changedBy, { role_id, reason }) => {
+    try {
+        const user = await changeUserRole({
+            targetUserId,
+            newRoleId: role_id,
+            changedBy,
+            reason
+        });
+
+        if (!user) {
+            const error = new Error('User not found');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        return user;
+    } catch (err) {
+        // The procedure's error text is in sqlMessage, for example "LAST_ROLE_MANAGER"
+        const known = Object.keys(ROLE_CHANGE_ERRORS).find((key) =>
+            err.sqlMessage?.includes(key)
+        );
+
+        if (known) {
+            const error = new Error(ROLE_CHANGE_ERRORS[known].message);
+            error.statusCode = ROLE_CHANGE_ERRORS[known].statusCode;
+            throw error;
+        }
+
+        throw err;
     }
 };

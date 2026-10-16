@@ -5,7 +5,9 @@ import {
     addProductImages,
     updateProduct,
     listProducts,
-    getProductDetail
+    getProductDetail,
+    deleteProductImage,
+    setPrimaryProductImage
 } from '../models/product.model.js';
 import { slugify } from '../utils/slug.utils.js';
 import {
@@ -206,4 +208,37 @@ export const getProductDetailService = async (productId) => {
     }
 
     return detail;
+};
+
+export const deleteProductImageService = async (productId, imageId) => {
+    const result = await deleteProductImage(productId, imageId);
+
+    // No deleted path means the image doesn't exist or belongs to another product
+    if (!result || !result.deleted_image_url) {
+        const error = new Error('Image not found');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // The database row is gone, so the file can go too (never throws)
+    await deleteProductImageFile(result.deleted_image_url);
+
+    return {
+        new_primary_image_id: result.new_primary_image_id
+    };
+};
+
+export const setPrimaryImageService = async (productId, imageId) => {
+    const images = await setPrimaryProductImage(productId, imageId);
+
+    // The procedure returns the product's images either way, so check the image is in the list
+    const found = images.some((image) => Number(image.image_id) === Number(imageId));
+
+    if (!found) {
+        const error = new Error('Image not found');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    return images;
 };

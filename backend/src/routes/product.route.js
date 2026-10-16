@@ -8,13 +8,16 @@ import {
     updateProduct,
     listPublicProducts,
     listAdminProducts,
-    getProductDetail
+    getProductDetail,
+    deleteProductImage,
+    setPrimaryProductImage
 } from '../controllers/product.controller.js';
 import {
     validateCreateProduct,
     validateProductIdParam,
     validateUpdateProduct,
-    validateProductListQuery
+    validateProductListQuery,
+    validateImageIdParam
 } from '../validators/product.validator.js';
 
 const router = express.Router();
@@ -66,6 +69,26 @@ router.patch(
     validateProductIdParam,
     validateUpdateProduct,
     updateProduct
+);
+
+// Delete one image
+router.delete(
+    '/:id/images/:imageId',
+    authenticate,
+    requirePermission('product.update'),
+    validateProductIdParam,
+    validateImageIdParam,
+    deleteProductImage
+);
+
+// Make one image the primary image
+router.patch(
+    '/:id/images/:imageId/primary',
+    authenticate,
+    requirePermission('product.update'),
+    validateProductIdParam,
+    validateImageIdParam,
+    setPrimaryProductImage
 );
 
 export default router;

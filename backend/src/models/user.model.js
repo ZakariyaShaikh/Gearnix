@@ -114,3 +114,30 @@ export const getUserAuthState = async (userId) => {
     const [rows] = await pool.query('CALL sp_get_user_auth_state(?)', [userId]);
     return rows[0][0] || null;
 };
+
+export const listUsers = async ({ roleId, search, limit, offset }) => {
+    const [rows] = await pool.query('CALL sp_list_users(?, ?, ?, ?)', [
+        roleId ?? null,
+        search ?? null,
+        limit,
+        offset
+    ]);
+
+    // rows[0] = the count result set, rows[1] = the page of users
+    return {
+        total: Number(rows[0][0].total),
+        items: rows[1]
+    };
+};
+
+export const changeUserRole = async ({ targetUserId, newRoleId, changedBy, reason }) => {
+    const [rows] = await pool.query('CALL sp_change_user_role(?, ?, ?, ?)', [
+        targetUserId,
+        newRoleId,
+        changedBy,
+        reason ?? null
+    ]);
+
+    // One row: the updated user with their new role
+    return rows[0][0] || null;
+};

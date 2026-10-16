@@ -3,7 +3,9 @@ import {
     addProductImagesService,
     updateProductService,
     listProductsService,
-    getProductDetailService 
+    getProductDetailService,
+    deleteProductImageService,
+    setPrimaryImageService
 } from '../services/product.service.js';
 
 const sendError = (res, error) => {
@@ -119,6 +121,35 @@ export const getProductDetail = async (req, res) => {
                 categories: detail.categories,
                 images: detail.images
             }
+        });
+    } catch (error) {
+        return sendError(res, error);
+    }
+};
+
+export const deleteProductImage = async (req, res) => {
+    try {
+        // Both IDs were validated as positive integers by the route's validators
+        const result = await deleteProductImageService(req.params.id, req.params.imageId);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Product image deleted successfully',
+            data: result
+        });
+    } catch (error) {
+        return sendError(res, error);
+    }
+};
+
+export const setPrimaryProductImage = async (req, res) => {
+    try {
+        const images = await setPrimaryImageService(req.params.id, req.params.imageId);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Primary image updated successfully',
+            data: images
         });
     } catch (error) {
         return sendError(res, error);
