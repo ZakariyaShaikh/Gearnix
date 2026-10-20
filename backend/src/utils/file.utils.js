@@ -8,14 +8,17 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const UPLOADS_ROOT = path.join(__dirname, '..', '..', 'uploads');
 export const PROFILE_IMAGE_DIR = path.join(UPLOADS_ROOT, 'profile-images');
 export const PRODUCT_IMAGE_DIR = path.join(UPLOADS_ROOT, 'product-images');
+export const BLOG_IMAGE_DIR = path.join(UPLOADS_ROOT, 'blog-images');
 
 // Public URL prefixes stored in the database
 export const PROFILE_IMAGE_URL_PREFIX = '/uploads/profile-images/';
 export const PRODUCT_IMAGE_URL_PREFIX = '/uploads/product-images/';
+export const BLOG_IMAGE_URL_PREFIX = '/uploads/blog-images/';
 
-// Make sure both folders exist when the server starts
+// Make sure all folders exist when the server starts
 fs.mkdirSync(PROFILE_IMAGE_DIR, { recursive: true });
 fs.mkdirSync(PRODUCT_IMAGE_DIR, { recursive: true });
+fs.mkdirSync(BLOG_IMAGE_DIR, { recursive: true });
 
 // Shared delete logic. Never throws.
 const deleteFromFolder = async (folder, storedPathOrName) => {
@@ -36,3 +39,6 @@ export const deleteProfileImageFile = (storedPathOrName) =>
 
 export const deleteProductImageFile = (storedPathOrName) =>
     deleteFromFolder(PRODUCT_IMAGE_DIR, storedPathOrName);
+
+export const deleteBlogImageFile = (storedPathOrName) =>
+    deleteFromFolder(BLOG_IMAGE_DIR, storedPathOrName);

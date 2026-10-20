@@ -1,5 +1,9 @@
 import multer from 'multer';
-import { PROFILE_IMAGE_DIR, PRODUCT_IMAGE_DIR } from '../utils/file.utils.js';
+import {
+    PROFILE_IMAGE_DIR,
+    PRODUCT_IMAGE_DIR,
+    BLOG_IMAGE_DIR
+} from '../utils/file.utils.js';
 
 const ALLOWED_TYPES = {
     'image/jpeg': '.jpg',
@@ -118,6 +122,57 @@ export const uploadProductImages = (req, res, next) => {
             return res.status(400).json({
                 success: false,
                 message: 'At least one image file is required'
+            });
+        }
+
+        next();
+    });
+};
+
+// ---------- Blog cover (single file, field "cover") ----------
+
+const blogStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, BLOG_IMAGE_DIR);
+    },
+    filename: (req, file, cb) => {
+        // req.params.id was validated before this middleware runs
+        const ext = ALLOWED_TYPES[file.mimetype];
+        const unique = Math.random().toString(36).slice(2, 8);
+        cb(null, `blog-${req.params.id}-${Date.now()}-${unique}${ext}`);
+    }
+});
+
+const blogUpload = multer({
+    storage: blogStorage,
+    fileFilter,
+    limits: { fileSize: MAX_FILE_SIZE }
+});
+
+export const uploadBlogCover = (req, res, next) => {
+    blogUpload.single('cover')(req, res, (err) => {
+        if (err) {
+            if (err instanceof multer.MulterError || err.isValidation) {
+                const message =
+                    err.code === 'LIMIT_FILE_SIZE'
+                        ? 'Image must be 2MB or smaller'
+                        : err.code === 'LIMIT_UNEXPECTED_FILE'
+                        ? 'Upload the image using the field name "cover"'
+                        : err.message;
+
+                return res.status(400).json({ success: false, message });
+            }
+
+            return res.status(500).json({
+                success: false,
+                message: 'Internal server error'
+            });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cover image file is required'
             });
         }
 
