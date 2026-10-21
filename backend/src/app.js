@@ -10,6 +10,10 @@ import categoryRoutes from './routes/category.route.js';
 import productRoutes from './routes/product.route.js';
 import roleManagementRoutes from './routes/role-management.route.js';
 import blogRoutes from './routes/blog.route.js';
+import cartRoutes from './routes/cart.route.js';
+import wishlistRoutes from './routes/wishlist.route.js';
+import addressRoutes from './routes/address.route.js';
+
 
 
 
@@ -39,6 +43,8 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/roles', roleManagementRoutes);
 app.use('/api/blogs', blogRoutes);
-
+app.use('/api/cart', cartRoutes);
+app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/addresses', addressRoutes);
 
 export default app ;
