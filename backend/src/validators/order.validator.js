@@ -1,0 +1,47 @@
+export const validateOrderIdParam = (req, res, next) => {
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ success: false, message: 'Invalid order ID' });
+    }
+
+    req.params.id = id;
+    next();
+};
+
+export const validateCheckout = (req, res, next) => {
+    const addressId = req.body?.address_id;
+
+    if (!Number.isInteger(addressId) || addressId <= 0) {
+        return res.status(400).json({
+            success: false,
+            message: 'Address ID must be a positive whole number'
+        });
+    }
+
+    // Only the address is accepted. Prices, totals and items come from the cart
+    req.body = { address_id: addressId };
+    next();
+};
+
+export const validateVerifyPayment = (req, res, next) => {
+    const body = req.body || {};
+    const fields = ['razorpay_order_id', 'razorpay_payment_id', 'razorpay_signature'];
+
+    for (const field of fields) {
+        if (typeof body[field] !== 'string' || body[field].trim() === '' || body[field].length > 100) {
+            return res.status(400).json({
+                success: false,
+                message: `${field} is required`
+            });
+        }
+    }
+
+    req.body = {
+        razorpay_order_id: body.razorpay_order_id.trim(),
+        razorpay_payment_id: body.razorpay_payment_id.trim(),
+        razorpay_signature: body.razorpay_signature.trim()
+    };
+
+    next();
+};
