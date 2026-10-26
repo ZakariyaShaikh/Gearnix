@@ -1,7 +1,9 @@
 import {
     checkoutService,
     verifyPaymentService,
-    cancelOrderService
+    cancelOrderService,
+    listOrdersService,
+    getOrderDetailService
 } from '../services/order.service.js';
 
 const sendError = (res, error) => {
@@ -46,6 +48,35 @@ export const cancelOrder = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: 'Order cancelled and stock released',
+            data: order
+        });
+    } catch (error) {
+        return sendError(res, error);
+    }
+};
+
+export const listOrders = async (req, res) => {
+    try {
+        const result = await listOrdersService(req.user.user_id, req.listQuery);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Orders fetched successfully',
+            data: result
+        });
+    } catch (error) {
+        return sendError(res, error);
+    }
+};
+
+export const getOrder = async (req, res) => {
+    try {
+        // Already validated as a positive integer by validateOrderIdParam
+        const order = await getOrderDetailService(req.user.user_id, req.params.id);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Order fetched successfully',
             data: order
         });
     } catch (error) {

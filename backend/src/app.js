@@ -14,6 +14,7 @@ import cartRoutes from './routes/cart.route.js';
 import wishlistRoutes from './routes/wishlist.route.js';
 import addressRoutes from './routes/address.route.js';
 import orderRoutes from './routes/order.route.js';
+import webhookRoutes from './routes/webhook.route.js';
 
 
 
@@ -22,7 +23,7 @@ const app = express();
 
 app.use(helmet());
 app.use(cors());
-
+app.use('/api/webhooks', webhookRoutes);
 
 app.use(express.json({ limit: '1mb' }));
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

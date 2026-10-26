@@ -45,3 +45,28 @@ export const validateVerifyPayment = (req, res, next) => {
 
     next();
 };
+
+export const validateOrderListQuery = (req, res, next) => {
+    const query = req.query || {};
+
+    const page = query.page === undefined ? 1 : Number(query.page);
+
+    if (!Number.isInteger(page) || page < 1) {
+        return res.status(400).json({
+            success: false,
+            message: 'Page must be a whole number, 1 or more'
+        });
+    }
+
+    const limit = query.limit === undefined ? 10 : Number(query.limit);
+
+    if (!Number.isInteger(limit) || limit < 1 || limit > 50) {
+        return res.status(400).json({
+            success: false,
+            message: 'Limit must be a whole number between 1 and 50'
+        });
+    }
+
+    req.listQuery = { page, limit };
+    next();
+};

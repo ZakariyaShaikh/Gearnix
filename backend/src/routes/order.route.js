@@ -1,14 +1,39 @@
 import express from 'express';
 import { authenticate } from '../middlewares/auth.middleware.js';
 import { requirePermission } from '../middlewares/permission.middleware.js';
-import { checkout, verifyPayment, cancelOrder } from '../controllers/order.controller.js';
+import {
+    checkout,
+    verifyPayment,
+    cancelOrder,
+    listOrders,
+    getOrder
+} from '../controllers/order.controller.js';
 import {
     validateCheckout,
     validateVerifyPayment,
-    validateOrderIdParam
+    validateOrderIdParam,
+    validateOrderListQuery
 } from '../validators/order.validator.js';
 
 const router = express.Router();
+
+// The customer's order history
+router.get(
+    '/',
+    authenticate,
+    requirePermission('order.manage'),
+    validateOrderListQuery,
+    listOrders
+);
+
+// One order with its items and payment
+router.get(
+    '/:id',
+    authenticate,
+    requirePermission('order.manage'),
+    validateOrderIdParam,
+    getOrder
+);
 
 // Turn the cart into an order and start the payment
 router.post(
