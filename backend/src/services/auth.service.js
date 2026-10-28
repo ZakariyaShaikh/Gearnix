@@ -4,6 +4,14 @@ import {
     findUserForLogin
 } from '../models/user.model.js';
 
+import { getUserAuthState } from '../models/user.model.js';
+import {
+    startSession,
+    refreshSession,
+    endSession,
+    endAllSessions
+} from './session.service.js';
+
 import {
     findRoleByName
 } from '../models/role.model.js';
@@ -127,20 +135,26 @@ export const getUserProfile = async (userId) => {
 export const loginUser = async ({
     email,
     password
-}) => {
+}, meta = {}) => {
 
     const user = await findUserForLogin(email);
 
     if (!user) {
-        throw new Error('Invalid email or password');
+        const error = new Error('Invalid email or password');
+        error.statusCode = 401;
+        throw error;
     }
 
     if (user.status !== 'active') {
-        throw new Error('Account is not active');
+        const error = new Error('Account is not active');
+        error.statusCode = 403;
+        throw error;
     }
 
     if (!user.is_email_verified) {
-        throw new Error('Please verify your email before logging in');
+        const error = new Error('Please verify your email before logging in');
+        error.statusCode = 403;
+        throw error;
     }
 
     const isPasswordValid = await comparePassword(
@@ -149,7 +163,9 @@ export const loginUser = async ({
     );
 
     if (!isPasswordValid) {
-        throw new Error('Invalid email or password');
+        const error = new Error('Invalid email or password');
+        error.statusCode = 401;
+        throw error;
     }
 
     const accessToken = generateAccessToken({
@@ -157,6 +173,9 @@ export const loginUser = async ({
         roleId: user.role_id,
         roleName: user.role_name
     });
+
+    // A new session for this device. The controller stores it in a cookie
+    const refreshToken = await startSession(user.user_id, meta);
 
     return {
         user: {
@@ -167,7 +186,8 @@ export const loginUser = async ({
             role_name: user.role_name,
             profile_image: user.profile_image
         },
-        access_token: accessToken
+        access_token: accessToken,
+        refresh_token: refreshToken
     };
 };
 
@@ -191,4 +211,55 @@ export const findUserProfileServices = async (userId) => {
         updated_at: user.updated_at,
         deleted_at: user.deleted_at
     };
+};
+
+export const refreshAccessService = async (presentedToken, meta = {}) => {
+    const result = await refreshSession(presentedToken, meta);
+
+    if (result.status === 'REUSED') {
+        console.warn('[auth] reused refresh token. All sessions ended for user', result.userId);
+    }
+
+    if (result.status !== 'ROTATED') {
+        const error = new Error('Your session has expired. Please log in again');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    // Check the account again: a suspended or deleted user must not get a new token
+    const authUser = await getUserAuthState(result.userId);
+
+    if (!authUser || authUser.status !== 'active') {
+        await endAllSessions(result.userId);
+
+        const error = new Error('Your account is no longer active');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    return {
+        access_token: generateAccessToken({
+            userId: authUser.user_id,
+            roleId: authUser.role_id,
+            roleName: authUser.role_name
+        }),
+        refresh_token: result.token,
+        user: {
+            user_id: authUser.user_id,
+            role_id: authUser.role_id,
+            role_name: authUser.role_name
+        }
+    };
+};
+
+export const logoutService = async (presentedToken) => {
+    if (!presentedToken) {
+        return 0;
+    }
+
+    return endSession(presentedToken);
+};
+
+export const logoutAllService = async (userId) => {
+    return endAllSessions(userId);
 };

@@ -10,6 +10,7 @@ import {
   deleteAccount,
   listUsers,
   changeUserRole,
+  getMe,
 } from "../controllers/user.controller.js";
 import {
   validateUpdateProfile,
@@ -42,6 +43,7 @@ router.patch(
 );
 
 // Own account
+router.get('/me', authenticate, getMe);
 router.get("/profile", authenticate, getProfile);
 router.patch("/profile", authenticate, validateUpdateProfile, updateProfile);
 router.patch(

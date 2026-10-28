@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Gearnix">
+  <defs>
+    <linearGradient id="gx-mark-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#A855F7"/>
+      <stop offset="1" stop-color="#FF4FA0"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#17171A" stroke="url(#gx-mark-grad)" stroke-width="2"/>
+  <path d="M42 20H22V44H42V34H32" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="miter"/>
+  <path d="M20 46L44 18" fill="none" stroke="url(#gx-mark-grad)" stroke-width="5" stroke-linecap="round"/>
+</svg>

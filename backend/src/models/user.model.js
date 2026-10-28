@@ -141,3 +141,10 @@ export const changeUserRole = async ({ targetUserId, newRoleId, changedBy, reaso
     // One row: the updated user with their new role
     return rows[0][0] || null;
 };
+
+export const getRolePermissionKeys = async (roleId) => {
+    const [rows] = await pool.query('CALL sp_get_role_permission_keys(?)', [roleId]);
+
+    // Just the key strings, for example ["cart.manage", "order.manage"]
+    return rows[0].map((row) => row.permission_key);
+};

@@ -5,7 +5,8 @@ import {
   updateProfileImageService,
   deleteAccountService,
   listUsersService,
-  changeUserRoleService
+  changeUserRoleService,
+  getMeService
 } from "../services/user.service.js";
 
 export const getProfile = async (req, res) => {
@@ -135,6 +136,23 @@ export const changeUserRole = async (req, res) => {
             success: true,
             message: 'User role updated successfully',
             data: user
+        });
+    } catch (error) {
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.statusCode ? error.message : 'Internal server error'
+        });
+    }
+};
+
+export const getMe = async (req, res) => {
+    try {
+        const me = await getMeService(req.user.user_id);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Current user fetched successfully',
+            data: me
         });
     } catch (error) {
         return res.status(error.statusCode || 500).json({
