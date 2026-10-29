@@ -134,6 +134,12 @@ export function LoginPage() {
           Use your account email and password to continue.
         </p>
 
+        {location.state?.notice && (
+          <p role="status" className="mt-5 rounded-lg border border-emerald-400/30 bg-emerald-950/20 p-3 text-sm text-emerald-200">
+            {location.state.notice}
+          </p>
+        )}
+
         <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
           <div className="space-y-2">
             <Label htmlFor="login-email">Email</Label>
@@ -185,6 +191,9 @@ export function LoginPage() {
           >
             Return to the store
           </Link>
+        </p>
+        <p className="mt-4 text-center text-sm text-brand-text-muted">
+          New to Gearnix? <Link to="/register" className="font-semibold text-brand-accent-pink underline-offset-4 hover:underline">Create account</Link>
         </p>
       </div>
     </section>

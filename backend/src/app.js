@@ -16,6 +16,7 @@ import wishlistRoutes from './routes/wishlist.route.js';
 import addressRoutes from './routes/address.route.js';
 import orderRoutes from './routes/order.route.js';
 import webhookRoutes from './routes/webhook.route.js';
+import { allowCrossOriginUploads } from './middlewares/upload-cors.middleware.js';
 
 
 
@@ -36,15 +37,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 app.use(
     '/uploads',
-    (req, res, next) => {
-        if (
-            req.path.startsWith('/blog-images/') ||
-            req.path.startsWith('/product-images/')
-        ) {
-            res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-        }
-        next();
-    },
+    allowCrossOriginUploads,
     express.static(path.join(__dirname, '..', 'uploads'))
 );
 

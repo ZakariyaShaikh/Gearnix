@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { getPublicBlog } from '@/api/blogs.api'
 import { formatDate, getMediaUrl } from '@/utils/media'
 import { sanitizeBlogHtml } from '@/utils/sanitize'
+import { PageMeta } from '@/components/shared/PageMeta'
 
 export function BlogDetailPage() {
   const { slug } = useParams()
@@ -23,19 +24,27 @@ export function BlogDetailPage() {
     return () => { active = false }
   }, [slug])
 
-  if (loading) return <p role="status" className="py-16 text-center">Loading story…</p>
+  if (loading) return <><PageMeta title="Gaming Story" /><p role="status" className="py-16 text-center">Loading story…</p></>
   if (error || !post) {
     return (
-      <section className="mx-auto max-w-xl py-16 text-center">
-        <h1 className="font-primary text-3xl font-bold">Story not found</h1>
-        <p role="alert" className="mt-3 text-brand-text-muted">{error || 'This story is not available.'}</p>
-        <Link to="/blogs" className="mt-6 inline-flex min-h-11 items-center rounded-full bg-brand-accent-pink px-6 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Back to News</Link>
-      </section>
+      <>
+        <PageMeta title="Story Not Found" description="This gaming story is not available." />
+        <section className="mx-auto max-w-xl py-16 text-center">
+          <h1 className="font-primary text-3xl font-bold">Story not found</h1>
+          <p role="alert" className="mt-3 text-brand-text-muted">{error || 'This story is not available.'}</p>
+          <Link to="/blogs" className="mt-6 inline-flex min-h-11 items-center rounded-full bg-brand-accent-pink px-6 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Back to News</Link>
+        </section>
+      </>
     )
   }
 
   return (
     <article className="mx-auto max-w-4xl space-y-8 py-4">
+      <PageMeta
+        title={post.title}
+        description={post.excerpt || 'Read the latest gaming story from Gearnix.'}
+        image={post.cover_image ? getMediaUrl(post.cover_image) : undefined}
+      />
       <nav aria-label="Breadcrumb" className="text-sm text-brand-text-muted">
         <Link to="/" className="hover:text-brand-accent-pink">Home</Link>
         <span aria-hidden="true"> / </span>

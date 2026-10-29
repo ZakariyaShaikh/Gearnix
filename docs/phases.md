@@ -96,7 +96,7 @@ Complete and tested. Covers:
 - Every page works on a phone-sized screen
 - Only published blogs and visible products appear
 
-## Phase 6: Customer account and checkout ⬜
+## Phase 6: Customer account and checkout — IN PROGRESS
 
 **Goal:** a customer can register, shop, pay, and track orders.
 
@@ -114,7 +114,7 @@ Complete and tested. Covers:
 - A payment that fails leaves the order cancelled and the stock released
 - The customer sees a clear result after payment, whether it succeeded or not
 
-## Phase 7: Quality pass ⬜
+## Phase 7: Quality pass — IN PROGRESS
 
 **Goal:** the app is solid enough to show real users.
 
@@ -123,6 +123,7 @@ Complete and tested. Covers:
 - Accessibility pass: keyboard navigation, focus rings, labels, contrast
 - Reduced-motion support for all animations
 - SEO basics: page titles, descriptions, Open Graph tags on storefront pages
+- Current start: route-aware titles, descriptions, canonical URLs, and Open Graph metadata on the home, product, and blog pages
 - Performance pass: image sizes, lazy loading, code splitting for admin
 - Smoke tests for the main purchase and admin flows
 

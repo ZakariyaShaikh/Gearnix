@@ -25,6 +25,7 @@ import { StoreHeader } from '@/components/shared/StoreHeader'
 import { ADMIN_PERMISSIONS } from '@/constants/permissions'
 import { SITE } from '@/constants/site'
 import { useAuth } from '@/auth/AuthContext'
+import { getMediaUrl } from '@/utils/media'
 
 const socialLinks = [
   { name: 'Facebook', url: SITE.socials.facebook, icon: FaFacebookF },
@@ -166,7 +167,7 @@ function StoreFooter() {
   )
 }
 
-function MobileTabs({ status, wishlistCount }) {
+function MobileTabs({ status, wishlistCount, profileImage }) {
   const location = useLocation()
   const accountPath = status === 'authenticated' ? '/profile' : '/login'
   const tabs = [
@@ -183,7 +184,9 @@ function MobileTabs({ status, wishlistCount }) {
         return (
           <Link key={label} to={to} aria-current={active ? 'page' : undefined} aria-label={count ? `${label}, ${count} items` : label} className={`flex min-h-[68px] flex-col items-center justify-center gap-1 border-r border-zinc-200 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-accent-magenta last:border-r-0 ${active ? 'text-brand-accent-magenta' : ''}`}>
             <span className="relative">
-              {createElement(icon, { 'aria-hidden': true, size: 24 })}
+              {label === 'Account' && status === 'authenticated' && profileImage
+                ? <img src={getMediaUrl(profileImage)} alt="" className="size-6 rounded-full object-cover" />
+                : createElement(icon, { 'aria-hidden': true, size: 24 })}
               {count > 0 && (
                 <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-brand-accent-magenta text-[9px] font-bold leading-none text-white">
                   {count > 99 ? '99+' : count}
@@ -199,7 +202,7 @@ function MobileTabs({ status, wishlistCount }) {
 }
 
 export function StoreLayout() {
-  const { hasPermission, status } = useAuth()
+  const { hasPermission, status, user } = useAuth()
   const location = useLocation()
   const canAccessAdmin =
     status === 'authenticated' && ADMIN_PERMISSIONS.some(hasPermission)
@@ -241,13 +244,14 @@ export function StoreLayout() {
         canAccessAdmin={canAccessAdmin}
         cartCount={cartCount}
         wishlistCount={wishlistCount}
+        profileImage={user?.profile_image}
       />
 
       <main className="min-h-[calc(100vh-3.5rem)] w-full px-4 py-8 pb-[calc(68px+env(safe-area-inset-bottom))] sm:px-6 md:min-h-[calc(100vh-4.5rem)] md:pb-12">
         <Outlet />
       </main>
       <StoreFooter />
-      <MobileTabs status={status} wishlistCount={wishlistCount} />
+      <MobileTabs status={status} wishlistCount={wishlistCount} profileImage={user?.profile_image} />
     </div>
   )
 }

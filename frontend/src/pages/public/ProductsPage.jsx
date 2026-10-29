@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { listCategories, listPublicProducts } from '@/api/catalog.api'
 import { ProductCard } from '@/components/shared/ProductCard'
+import { PageMeta } from '@/components/shared/PageMeta'
 
 const pageLimit = 12
 
@@ -69,6 +70,7 @@ export function ProductsPage() {
 
   return (
     <section className="space-y-8">
+      <PageMeta title="Shop Products" description="Find the gaming gear that makes every session yours." />
       <header className="space-y-3">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-accent-pink">Gearnix gear</p>
         <h1 className="font-primary text-3xl font-bold sm:text-4xl">Shop Products</h1>

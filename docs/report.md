@@ -2600,6 +2600,170 @@
 - Status: done
 - Notes for Claude: The historical R-250 entry is not rewritten; these entries supersede its same-origin policy finding for existing public blog/product uploads.
 
+### R-325 · Tasks 31–40 · DECISION
+- Path: `docs/phases.md`, Phase 6
+- Purpose: Define a practical Task 31–40 sequence because the committed task breakdown ends at Task 30.
+- Depends on: `docs/PRD.md` sections 4.1, 4.2, 4.6, and 4.7; `docs/architecture.md` sections 6–8.
+- Used by: Phase 6 frontend implementation.
+- Status: done
+- Notes for Claude: The inferred sequence is registration and verification; profile/account management; addresses; cart; wishlist; checkout/payment; order history; order detail/cancellation; route integration; and customer-flow testing. This mapping is derived from the documented Phase 6 deliverables, not an existing numbered list.
+
+### R-326 · Task 31 · FILE_CHANGED
+- Path: `frontend/package.json`, `frontend/package-lock.json`, `frontend/vite.config.js`
+- Purpose: Add Vitest, React Testing Library, user-event, and jsdom for test-first React work.
+- Depends on: User request to follow test-driven development.
+- Used by: Tasks 31–40 page and API tests.
+- Status: done
+- Notes for Claude: `npm.cmd test` runs Vitest in jsdom. Dependencies were installed after the sandbox denied npm's global cache write; no secrets or environment files were changed.
+
+### R-327 · Task 31 · FILE_CREATED
+- Path: `frontend/src/api/auth.api.js`, `frontend/src/api/auth.api.test.js`
+- Purpose: Add registration, email OTP verification, and resend-code API helpers.
+- Depends on: Backend `POST /auth/register`, `/auth/verify-email`, and `/auth/resend-otp`.
+- Used by: Registration and email verification.
+- Status: done
+- Notes for Claude: Tests were run red before adding the helpers, then passed against the documented API envelope.
+
+### R-328 · Task 31 · FILE_CREATED
+- Path: `frontend/src/pages/public/RegisterPage.jsx`, `frontend/src/pages/public/RegisterPage.test.jsx`
+- Purpose: Implement registration, field validation, OTP verification, resend-code flow, and verified-account feedback.
+- Depends on: `R-327`; `docs/PRD.md` AUTH-01, AUTH-02, and AUTH-08.
+- Used by: `/register`.
+- Status: done
+- Notes for Claude: Includes labeled fields, inline errors, error-summary focus, password-manager autocomplete, and a link back to sign-in.
+
+### R-329 · Task 32 · FILE_CHANGED
+- Path: `frontend/src/api/users.api.js`, `frontend/src/api/users.account.api.test.js`, `frontend/src/auth/AuthContext.jsx`
+- Purpose: Add profile, username update, password change, image upload, account deletion API helpers, and a way to refresh the in-memory user.
+- Depends on: Existing `/users/profile`, `/users/change-password`, `/users/profile-image`, and `/users/account` endpoints.
+- Used by: Profile and account settings.
+- Status: done
+- Notes for Claude: Password payload includes the backend-required confirmation field; profile images use multipart field `profile_image`.
+
+### R-330 · Task 32 · FILE_CHANGED
+- Path: `frontend/src/pages/public/ProfilePage.jsx`, `frontend/src/pages/public/ProfilePage.test.jsx`
+- Purpose: Complete profile editing, password change, profile-image upload, account deletion, and logout.
+- Depends on: `R-329`; `docs/PRD.md` ACC-01 through ACC-04.
+- Used by: `/profile`.
+- Status: done
+- Notes for Claude: Image MIME type and 2 MB limits are checked before upload. Password changes and deletion end the session and return the customer to sign-in.
+
+### R-331 · Task 33 · FILE_CREATED
+- Path: `frontend/src/pages/customer/AddressesPage.jsx`, `frontend/src/pages/customer/AddressesPage.test.jsx`
+- Purpose: Implement address create, edit, delete, and default selection.
+- Depends on: Existing address endpoints and `docs/PRD.md` CRT-04.
+- Used by: `/addresses` and checkout address selection.
+- Status: done
+- Notes for Claude: Validates Indian mobile numbers and PIN codes before submit; deletion reflects the backend's replacement default address.
+
+### R-332 · Task 34 · FILE_CREATED
+- Path: `frontend/src/pages/customer/CartPage.jsx`, `frontend/src/pages/customer/CartPage.test.jsx`
+- Purpose: Show live cart prices, quantity controls, removals, unavailable-item states, and subtotal.
+- Depends on: Existing cart endpoints and `docs/PRD.md` CRT-01 and CRT-02.
+- Used by: `/cart`.
+- Status: done
+- Notes for Claude: Checkout is disabled while an unavailable item remains; successful changes refresh the header cart count.
+
+### R-333 · Task 35 · FILE_CREATED
+- Path: `frontend/src/pages/customer/WishlistPage.jsx`, `frontend/src/pages/customer/WishlistPage.test.jsx`
+- Purpose: List saved products with availability, remove entries, and add available entries to the cart.
+- Depends on: Existing wishlist/cart endpoints and `docs/PRD.md` CRT-03.
+- Used by: `/wishlist`.
+- Status: done
+
+### R-334 · Task 36 · FILE_CREATED
+- Path: `frontend/src/pages/customer/CheckoutPage.jsx`, `frontend/src/pages/customer/CheckoutPage.test.jsx`
+- Purpose: Select an address, create an order, open Razorpay Checkout, verify payment, and cancel/release stock on a failed payment.
+- Depends on: Existing address/cart/order APIs and `docs/architecture.md` section 8.
+- Used by: `/checkout`.
+- Status: done
+- Notes for Claude: The browser receives only the public Razorpay key. If Checkout.js cannot load after order creation, the page asks the backend to cancel the unpaid order. The real Razorpay test-mode purchase remains unverified here.
+
+### R-335 · Task 37 · FILE_CREATED
+- Path: `frontend/src/pages/customer/OrdersPage.jsx`, `frontend/src/pages/customer/OrdersPage.test.jsx`
+- Purpose: Display paginated order history, totals, dates, and payment status.
+- Depends on: Existing `GET /orders` endpoint and `docs/PRD.md` CHK-06.
+- Used by: `/orders`.
+- Status: done
+
+### R-336 · Task 38 · FILE_CREATED
+- Path: `frontend/src/pages/customer/OrderDetailPage.jsx`, `frontend/src/pages/customer/OrderDetailPage.test.jsx`
+- Purpose: Display saved shipping details, purchased lines, payment state, and cancel an unpaid order.
+- Depends on: Existing `GET /orders/:id` and `POST /orders/:id/cancel` endpoints.
+- Used by: `/orders/:id`.
+- Status: done
+
+### R-337 · Task 39 · FILE_CHANGED
+- Path: `frontend/src/App.jsx`, `frontend/src/pages/public/LoginPage.jsx`, `frontend/src/pages/public/LoginPage.test.jsx`
+- Purpose: Connect the customer pages to their guarded routes, expose registration from sign-in, and show account-action completion notices.
+- Depends on: Tasks 31–38.
+- Used by: Customer navigation and account recovery/verification journeys.
+- Status: done
+
+### R-338 · Task 40 · TEST
+- Path: `frontend/src/api/*.test.js`, `frontend/src/pages/public/*.test.jsx`, `frontend/src/pages/customer/*.test.jsx`
+- Purpose: Verify customer API contracts and registration, account, address, cart, wishlist, checkout, and order interactions.
+- Depends on: Tasks 31–39.
+- Used by: Phase 6 customer-flow acceptance.
+- Status: done
+- Notes for Claude: `npm.cmd test -- --reporter=dot` passed: 12 test files, 31 tests. `npm.cmd run lint` passed. `npm.cmd run build` passed; Vite reports the main JavaScript bundle exceeds its 500 kB advisory threshold. Razorpay test-mode and live-backend database flows still need environment-backed verification.
+
+### R-339 · Phase 7 · FILE_CREATED
+- Path: `frontend/src/components/shared/PageMeta.jsx`, `frontend/src/components/shared/PageMeta.test.jsx`
+- Purpose: Add tested route-aware document title, description, canonical URL, and Open Graph metadata.
+- Depends on: Phase 7 SEO requirement in `docs/phases.md`.
+- Used by: Home, product list/detail, and blog list/detail pages.
+- Status: done
+- Notes for Claude: Tests were added and run red before implementation. Metadata updates with route content; descriptions are capped at 160 characters and absent images remove stale `og:image` tags.
+
+### R-340 · Phase 7 · FILE_CHANGED
+- Path: `frontend/src/pages/public/HomePage.jsx`, `ProductsPage.jsx`, `ProductDetailPage.jsx`, `BlogsPage.jsx`, `BlogDetailPage.jsx`
+- Purpose: Apply the metadata component to public storefront routes.
+- Depends on: `R-339`.
+- Used by: Search engines and social link previews.
+- Status: done
+- Notes for Claude: Product and story detail metadata uses loaded item titles, descriptions, and images; list pages use fixed summaries.
+
+### R-341 · Phase 7 · TEST
+- Path: `frontend/src/components/shared/PageMeta.test.jsx`
+- Purpose: Verify title, description, Open Graph values, canonical URL, default description, and stale-image cleanup.
+- Depends on: `R-339`.
+- Used by: Metadata regression coverage.
+- Status: done
+- Notes for Claude: The focused test first exposed that the optional canonical URL prop was ignored. After fixing it, both focused tests passed.
+
+### R-342 · Phase 7 · COMMAND
+- Path: `frontend/`
+- Purpose: Run the full frontend test suite, lint, and production build after the metadata change.
+- Depends on: `R-339` and `R-340`.
+- Used by: Phase 7 regression check.
+- Status: done
+- Notes for Claude: `npm.cmd test -- --reporter=dot --maxWorkers=1` passed (15 files, 37 tests); `npm.cmd run lint` passed; `npm.cmd run build` passed. `backend/npm.cmd test` passed (4 tests), including profile lookup and upload CORS. Build still reports the main JavaScript chunk above Vite's 500 kB advisory threshold.
+
+### R-343 · Phase 7 · FILE_CHANGED
+- Path: `docs/phases.md`, `docs/progress.md`
+- Purpose: Mark Phase 7 started and record completed SEO metadata work plus pending Phase 6 live verification.
+- Depends on: `R-339` through `R-342`.
+- Used by: Project progress tracking.
+- Status: done
+- Notes for Claude: Phase 6 remains in progress until the Razorpay test purchase acceptance criteria and live database flows are verified.
+
+### R-344 · Test cleanup · FILE_DELETED
+- Path: `frontend/src/**/*.test.*`; `backend/database/procedures/sp_find_user_profile.test.js`
+- Purpose: Remove frontend and procedure test files at the user's request.
+- Depends on: User instruction.
+- Used by: None.
+- Status: done
+- Notes for Claude: Removed 15 frontend test files and the procedure test file. Backend tests outside these requested areas and `backend/database/seeds/test_users.sql` were retained.
+
+### R-345 · Test cleanup · FILE_CHANGED
+- Path: `frontend/package.json`, `frontend/package-lock.json`, `frontend/vite.config.js`
+- Purpose: Remove the now-unused frontend test runner, test-only dependencies, and test configuration.
+- Depends on: `R-344`.
+- Used by: Frontend development, build, and lint.
+- Status: done
+- Notes for Claude: Removed the frontend `test` script, Vitest/jsdom/Testing Library dependencies, and Vite's test block. `npm.cmd run lint` and `npm.cmd run build` passed; build retains the existing 500 kB chunk advisory.
+
 ## Map
 
 ### Routes
@@ -2611,14 +2775,14 @@
 | `/blogs` | `frontend/src/pages/public/BlogsPage.jsx` | `StoreLayout` | Everyone | `GET /blogs` |
 | `/blogs/:slug` | `frontend/src/pages/public/BlogDetailPage.jsx` | `StoreLayout` | Everyone | `GET /blogs/:slug` |
 | `/login` | `frontend/src/pages/public/LoginPage.jsx` | `StoreLayout` | Guests; authenticated users can explicitly log out to switch accounts | `POST /auth/login`, `POST /auth/logout` |
-| `/register` | `frontend/src/pages/public/PlaceholderPage.jsx` ("Register") | `StoreLayout` | Guests | None |
-| `/cart` | `frontend/src/pages/public/PlaceholderPage.jsx` ("Cart") | `StoreLayout` | Login required | None |
-| `/checkout` | `frontend/src/pages/public/PlaceholderPage.jsx` ("Checkout") | `StoreLayout` | Login required | None |
-| `/orders` | `frontend/src/pages/public/PlaceholderPage.jsx` ("Orders") | `StoreLayout` | Login required | None |
-| `/orders/:id` | `frontend/src/pages/public/PlaceholderPage.jsx` ("Order detail") | `StoreLayout` | Login required | None |
-| `/wishlist` | `frontend/src/pages/public/PlaceholderPage.jsx` ("Wishlist") | `StoreLayout` | Login required | None |
-| `/addresses` | `frontend/src/pages/public/PlaceholderPage.jsx` ("Addresses") | `StoreLayout` | Login required | None |
-| `/profile` | `frontend/src/pages/public/ProfilePage.jsx` | `StoreLayout` | Login required | AuthContext user from `GET /users/me`, `POST /auth/logout` |
+| `/register` | `frontend/src/pages/public/RegisterPage.jsx` | `StoreLayout` | Guests | `POST /auth/register`, `/auth/verify-email`, `/auth/resend-otp` |
+| `/cart` | `frontend/src/pages/customer/CartPage.jsx` | `StoreLayout` | Login required | Cart `GET`, `PATCH`, `DELETE` |
+| `/checkout` | `frontend/src/pages/customer/CheckoutPage.jsx` | `StoreLayout` | Login required | `GET /cart`, `GET /addresses`, `POST /orders/checkout`, payment verification/cancellation |
+| `/orders` | `frontend/src/pages/customer/OrdersPage.jsx` | `StoreLayout` | Login required | `GET /orders` |
+| `/orders/:id` | `frontend/src/pages/customer/OrderDetailPage.jsx` | `StoreLayout` | Login required | `GET /orders/:id`, `POST /orders/:id/cancel` |
+| `/wishlist` | `frontend/src/pages/customer/WishlistPage.jsx` | `StoreLayout` | Login required | Wishlist `GET`, `DELETE`; cart `POST` |
+| `/addresses` | `frontend/src/pages/customer/AddressesPage.jsx` | `StoreLayout` | Login required | Addresses `GET`, `POST`, `PATCH`, `DELETE` |
+| `/profile` | `frontend/src/pages/public/ProfilePage.jsx` | `StoreLayout` | Login required | Profile `GET`/`PATCH`, password change, image upload, account deletion, logout |
 | `/admin` | `frontend/src/pages/admin/DashboardPage.jsx` | `AdminLayout` | Any admin permission | `GET /users`, `GET /products/admin`; orders count unavailable |
 | `/admin/users` | `frontend/src/pages/admin/UsersPage.jsx` | `AdminLayout` | `user.read` | `GET /users`, `GET /roles`, `PATCH /users/:id/role` |
 | `/admin/roles` | `frontend/src/pages/admin/RolesPage.jsx` | `AdminLayout` | `role.read` | `GET /roles`, `PATCH /roles/:id/permissions` |
@@ -2641,6 +2805,7 @@
 | `frontend/src/components/ui/sonner.jsx` | component | Future global toast feedback | done |
 | `frontend/src/components/shared/Logo.jsx` | component | Store/admin headers | done |
 | `frontend/src/components/shared/StoreHeader.jsx` | component | `frontend/src/layouts/StoreLayout.jsx` | done; responsive home/inner header, live-data menus, and mobile drawer |
+| `frontend/src/components/shared/PageMeta.jsx` | component | Public home, product, and blog pages | done; route-aware title, description, canonical URL, and Open Graph tags |
 | `frontend/src/auth/RequireLogin.jsx` | component | Protected customer/admin routes | done |
 | `frontend/src/auth/RequirePermission.jsx` | component | Permission-protected admin routes | done |
 | `frontend/src/layouts/StoreLayout.jsx` | layout | Public/customer routes | done; shared StoreHeader, footer, count badges, mobile navigation, demo-only newsletter |

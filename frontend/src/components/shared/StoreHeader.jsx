@@ -44,14 +44,19 @@ function CountBadge({ count }) {
   )
 }
 
-function IconLink({ to, label, icon, count }) {
+function IconLink({ to, label, icon, count, image }) {
+  const [imageFailed, setImageFailed] = useState(false)
+  const imageUrl = image ? getMediaUrl(image) : ''
+
   return (
     <Link
       to={to}
       aria-label={count ? `${label}, ${count} items` : label}
       className="relative inline-flex size-11 shrink-0 items-center justify-center rounded-full text-brand-text-primary transition-colors hover:bg-white/10 hover:text-brand-accent-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent-magenta motion-reduce:transition-none"
     >
-      {createElement(icon, { 'aria-hidden': true, size: 22 })}
+      {imageUrl && !imageFailed ? (
+        <img src={imageUrl} alt="" onError={() => setImageFailed(true)} className="size-7 rounded-full object-cover" />
+      ) : createElement(icon, { 'aria-hidden': true, size: 22 })}
       <CountBadge count={count} />
     </Link>
   )
@@ -217,6 +222,7 @@ export function StoreHeader({
   canAccessAdmin,
   cartCount,
   wishlistCount,
+  profileImage,
 }) {
   const headerRef = useRef(null)
   const reduceMotion = useReducedMotion()
@@ -409,7 +415,7 @@ export function StoreHeader({
 
         <div className="flex items-center gap-1">
           <span className="hidden md:inline-flex"><IconLink to="/products" label="Search products" icon={FiSearch} /></span>
-          <span className="hidden md:inline-flex"><IconLink to={status === 'authenticated' ? '/profile' : '/login'} label="Account" icon={FiUser} /></span>
+          <span className="hidden md:inline-flex"><IconLink key={profileImage || 'account-icon'} to={status === 'authenticated' ? '/profile' : '/login'} label="Account" icon={FiUser} image={status === 'authenticated' ? profileImage : null} /></span>
           <span className="hidden md:inline-flex"><IconLink to="/wishlist" label="Wishlist" icon={FiHeart} count={wishlistCount} /></span>
           <IconLink to="/cart" label="Cart" icon={FiShoppingCart} count={cartCount} />
           {canAccessAdmin && (

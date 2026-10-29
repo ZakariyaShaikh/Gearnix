@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { listBlogs } from '@/api/blogs.api'
 import { formatDate, getMediaUrl } from '@/utils/media'
+import { PageMeta } from '@/components/shared/PageMeta'
 
 const pageLimit = 12
 
@@ -42,6 +43,7 @@ export function BlogsPage() {
 
   return (
     <section className="space-y-8 bg-brand-light py-6 text-brand-text-dark sm:py-10">
+      <PageMeta title="Gaming News & Stories" description="Read gaming news, guides, and stories from Gearnix." />
       <header className="text-center">
         <h1 className="font-primary text-4xl font-bold uppercase sm:text-5xl">News</h1>
         <p className="mt-3 text-sm">

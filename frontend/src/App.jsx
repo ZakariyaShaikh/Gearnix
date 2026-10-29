@@ -16,6 +16,13 @@ import { HomePage } from '@/pages/public/HomePage'
 import { LoginPage } from '@/pages/public/LoginPage'
 import { ProductDetailPage } from '@/pages/public/ProductDetailPage'
 import { ProfilePage } from '@/pages/public/ProfilePage'
+import { RegisterPage } from '@/pages/public/RegisterPage'
+import { AddressesPage } from '@/pages/customer/AddressesPage'
+import { CartPage } from '@/pages/customer/CartPage'
+import { WishlistPage } from '@/pages/customer/WishlistPage'
+import { CheckoutPage } from '@/pages/customer/CheckoutPage'
+import { OrdersPage } from '@/pages/customer/OrdersPage'
+import { OrderDetailPage } from '@/pages/customer/OrderDetailPage'
 import { ProductsPage as StoreProductsPage } from '@/pages/public/ProductsPage'
 import { PlaceholderPage } from '@/pages/public/PlaceholderPage'
 
@@ -35,12 +42,12 @@ function App() {
         <Route path="blogs" element={<BlogsPage />} />
         <Route path="blogs/:slug" element={<BlogDetailPage />} />
         <Route path="login" element={<LoginPage />} />
-        <Route path="register" element={<PlaceholderPage title="Register" />} />
+        <Route path="register" element={<RegisterPage />} />
         <Route
           path="cart"
           element={
             <RequireLogin>
-              <PlaceholderPage title="Cart" />
+              <CartPage />
             </RequireLogin>
           }
         />
@@ -48,7 +55,7 @@ function App() {
           path="checkout"
           element={
             <RequireLogin>
-              <PlaceholderPage title="Checkout" />
+              <CheckoutPage />
             </RequireLogin>
           }
         />
@@ -56,7 +63,7 @@ function App() {
           path="orders"
           element={
             <RequireLogin>
-              <PlaceholderPage title="Orders" />
+              <OrdersPage />
             </RequireLogin>
           }
         />
@@ -64,7 +71,7 @@ function App() {
           path="orders/:id"
           element={
             <RequireLogin>
-              <PlaceholderPage title="Order detail" />
+              <OrderDetailPage />
             </RequireLogin>
           }
         />
@@ -72,7 +79,7 @@ function App() {
           path="wishlist"
           element={
             <RequireLogin>
-              <PlaceholderPage title="Wishlist" />
+              <WishlistPage />
             </RequireLogin>
           }
         />
@@ -80,7 +87,7 @@ function App() {
           path="addresses"
           element={
             <RequireLogin>
-              <PlaceholderPage title="Addresses" />
+              <AddressesPage />
             </RequireLogin>
           }
         />

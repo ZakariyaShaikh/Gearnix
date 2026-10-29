@@ -13,6 +13,7 @@ import { PiPiggyBank } from 'react-icons/pi'
 import { listBlogs } from '@/api/blogs.api'
 import { listCategories, listPublicProducts } from '@/api/catalog.api'
 import { ProductCard } from '@/components/shared/ProductCard'
+import { PageMeta } from '@/components/shared/PageMeta'
 import { Button } from '@/components/ui/button'
 import {
   BRAND_LOGOS,
@@ -148,6 +149,10 @@ export function HomePage() {
 
   return (
     <div className="-mx-4 -mt-8 space-y-20 overflow-hidden pb-12 text-white sm:-mx-6">
+      <PageMeta
+        title="Gaming Gear & Esports Essentials"
+        description="Explore gaming gear, esports essentials, and stories to level up your setup at Gearnix."
+      />
       <section className="relative isolate flex min-h-[min(720px,calc(100svh-3.5rem))] items-center overflow-hidden bg-[#101014] px-5 py-16 sm:px-8 lg:px-[8%]">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_76%_48%,rgba(88,48,122,0.28),transparent_44%),linear-gradient(90deg,#101014_5%,rgba(16,16,20,0.88)_40%,rgba(16,16,20,0.2)_100%)]" aria-hidden="true" />
         <span className="pointer-events-none absolute right-[-4%] top-1/2 -z-10 hidden -translate-y-1/2 font-primary text-[clamp(7rem,21vw,20rem)] font-black uppercase tracking-tight text-white/[0.045] lg:block" aria-hidden="true">GEAR</span>
