@@ -114,3 +114,20 @@ export const validateAdminOrderListQuery = (req, res, next) => {
     req.listQuery = { page, limit, status: status || null, search: search || null };
     next();
 };
+
+export const validateRefundRequest = (req, res, next) => {
+    const reason = req.body?.reason;
+
+    if (reason !== undefined && reason !== null && (typeof reason !== 'string' || reason.length > 255)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Reason must be text, 255 characters or fewer'
+        });
+    }
+
+    req.body = {
+        reason: typeof reason === 'string' && reason.trim() ? reason.trim() : null
+    };
+
+    next();
+};

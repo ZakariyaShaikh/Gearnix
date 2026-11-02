@@ -4,7 +4,8 @@ import {
     cancelOrderService,
     listOrdersService,
     listAllOrdersService,
-    getOrderDetailService
+    getOrderDetailService,
+    requestRefundService
 } from '../services/order.service.js';
 
 const sendError = (res, error) => {
@@ -93,6 +94,46 @@ export const getOrder = async (req, res) => {
             success: true,
             message: 'Order fetched successfully',
             data: order
+        });
+    } catch (error) {
+        return sendError(res, error);
+    }
+};
+
+export const requestRefund = async (req, res) => {
+    try {
+        // Customer: sirf apna order. userId pass hota hai, isliye ownership check hoga
+        const result = await requestRefundService({
+            orderId: req.params.id,
+            userId: req.user.user_id,
+            requestedBy: req.user.user_id,
+            reason: req.body.reason
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: 'Refund requested',
+            data: result
+        });
+    } catch (error) {
+        return sendError(res, error);
+    }
+};
+
+export const requestRefundAdmin = async (req, res) => {
+    try {
+        // Admin: koi bhi order. userId null hai, isliye ownership check skip hota hai
+        const result = await requestRefundService({
+            orderId: req.params.id,
+            userId: null,
+            requestedBy: req.user.user_id,
+            reason: req.body.reason
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: 'Refund requested by admin',
+            data: result
         });
     } catch (error) {
         return sendError(res, error);

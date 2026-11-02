@@ -7,19 +7,19 @@ import {
     cancelOrder,
     listOrders,
     getOrder,
-    listAllOrders
+    requestRefund,
+    requestRefundAdmin
 } from '../controllers/order.controller.js';
 import {
     validateCheckout,
     validateVerifyPayment,
     validateOrderIdParam,
     validateOrderListQuery,
-    validateAdminOrderListQuery
+    validateRefundRequest
 } from '../validators/order.validator.js';
 
 const router = express.Router();
 
-// The customer's order history
 router.get(
     '/',
     authenticate,
@@ -28,16 +28,6 @@ router.get(
     listOrders
 );
 
-// All orders (Super Admin only): status filter, search, pagination
-router.get(
-    '/admin',
-    authenticate,
-    requirePermission('order.read'),
-    validateAdminOrderListQuery,
-    listAllOrders
-);
-
-// One order with its items and payment
 router.get(
     '/:id',
     authenticate,
@@ -46,7 +36,6 @@ router.get(
     getOrder
 );
 
-// Turn the cart into an order and start the payment
 router.post(
     '/checkout',
     authenticate,
@@ -55,7 +44,6 @@ router.post(
     checkout
 );
 
-// Confirm a payment after the customer pays on Razorpay
 router.post(
     '/:id/verify-payment',
     authenticate,
@@ -65,13 +53,32 @@ router.post(
     verifyPayment
 );
 
-// Cancel an unpaid order and release its stock
 router.post(
     '/:id/cancel',
     authenticate,
     requirePermission('order.manage'),
     validateOrderIdParam,
     cancelOrder
+);
+
+// Customer refund request: sirf apne paid order par
+router.post(
+    '/:id/refund',
+    authenticate,
+    requirePermission('order.manage'),
+    validateOrderIdParam,
+    validateRefundRequest,
+    requestRefund
+);
+
+// Admin refund request: koi bhi paid order par
+router.post(
+    '/admin/:id/refund',
+    authenticate,
+    requirePermission('order.refund'),
+    validateOrderIdParam,
+    validateRefundRequest,
+    requestRefundAdmin
 );
 
 export default router;

@@ -116,3 +116,23 @@ export const cancelStaleOrder = async (orderId, olderThanMinutes) => {
 
     return Number(rows[0][0].cancelled) === 1;
 };
+
+export const requestOrderRefund = async ({ orderId, userId, requestedBy, reason }) => {
+    const [rows] = await pool.query('CALL sp_request_order_refund(?, ?, ?, ?)', [
+        orderId,
+        userId ?? null,
+        requestedBy,
+        reason ?? null
+    ]);
+
+    return rows[0][0];
+};
+
+export const attachRefundProviderId = async (refundId, providerRefundId) => {
+    const [rows] = await pool.query('CALL sp_attach_refund_provider_id(?, ?)', [
+        refundId,
+        providerRefundId
+    ]);
+
+    return rows[0][0];
+};
