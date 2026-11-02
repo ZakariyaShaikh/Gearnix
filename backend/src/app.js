@@ -15,6 +15,7 @@ import cartRoutes from './routes/cart.route.js';
 import wishlistRoutes from './routes/wishlist.route.js';
 import addressRoutes from './routes/address.route.js';
 import orderRoutes from './routes/order.route.js';
+import dashboardRoutes from './routes/dashboard.route.js';
 import webhookRoutes from './routes/webhook.route.js';
 import { allowCrossOriginUploads } from './middlewares/upload-cors.middleware.js';
 
@@ -59,5 +60,6 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/addresses', addressRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 export default app ;

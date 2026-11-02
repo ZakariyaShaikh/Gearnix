@@ -3,6 +3,7 @@ import {
     verifyPaymentService,
     cancelOrderService,
     listOrdersService,
+    listAllOrdersService,
     getOrderDetailService
 } from '../services/order.service.js';
 
@@ -58,6 +59,20 @@ export const cancelOrder = async (req, res) => {
 export const listOrders = async (req, res) => {
     try {
         const result = await listOrdersService(req.user.user_id, req.listQuery);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Orders fetched successfully',
+            data: result
+        });
+    } catch (error) {
+        return sendError(res, error);
+    }
+};
+
+export const listAllOrders = async (req, res) => {
+    try {
+        const result = await listAllOrdersService(req.listQuery);
 
         return res.status(200).json({
             success: true,

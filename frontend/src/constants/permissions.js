@@ -19,6 +19,7 @@ export const PERMISSIONS = Object.freeze({
   USER_UPDATE_ROLE: 'user.update_role',
   ROLE_READ: 'role.read',
   ROLE_UPDATE: 'role.update',
+  ORDER_READ: 'order.read',
 })
 
 export const ADMIN_PERMISSIONS = Object.freeze([

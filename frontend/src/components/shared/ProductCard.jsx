@@ -22,7 +22,7 @@ function ProductAction({ productId, action, label, icon, disabled }) {
 
     try {
       await action(productId)
-      window.dispatchEvent(new Event('gearnix:cart-updated'))
+      if (action === addCartItem) window.dispatchEvent(new Event('gearnix:cart-updated'))
       toast.success(label === 'Add to cart' ? 'Added to cart.' : 'Added to wishlist.')
     } catch (error) {
       toast.error(error.message)

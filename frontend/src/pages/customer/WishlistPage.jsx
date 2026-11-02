@@ -23,7 +23,6 @@ export function WishlistPage() {
     try {
       await removeWishlistItem(item.product_id)
       setItems((current) => current.filter((saved) => saved.product_id !== item.product_id))
-      window.dispatchEvent(new Event('gearnix:cart-updated'))
       setNotice(`${item.name} removed from your wishlist.`)
     } catch (requestError) { setError(requestError.message || 'Unable to remove this item.') }
     finally { setBusyId(null) }

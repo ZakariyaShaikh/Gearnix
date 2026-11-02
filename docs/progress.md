@@ -1,14 +1,14 @@
 # Gearnix Progress
 
-Last updated: 2026-10-29
+Last updated: 2026-10-30
 
 ## Status
-- Phase 6 customer flows: registration/verification, profile, addresses, cart, wishlist, checkout, and order pages implemented. Razorpay test purchase and live database flows still need environment-backed verification.
-- Phase 7 quality pass: in progress. Route-aware title, description, canonical URL, and Open Graph metadata now cover home, product, and blog pages.
+- Phase 6 customer flows: done. The user confirmed the end-to-end Razorpay test-mode purchase succeeded.
+- Phase 7 quality pass: done. Route splitting, reduced-motion support, render-error fallback, mobile storefront checks, and authenticated admin route smoke checks are complete. Production lint/build pass with no Vite chunk warnings.
+- Admin dashboard: added a read-only analytics endpoint and 12-month order/user registration charts using the existing MySQL database.
 - Earlier backend, admin, and storefront implementation details remain in `docs/report.md`.
 
 ## Known follow-ups
-- Verify live admin actions with a valid session.
 - Product detail may reference a missing local image file (see `docs/report.md`).
 - Public blog excerpt/date polish is marked TODO-DESIGN.
 - Replace store contact/address and social placeholders when real details are provided.

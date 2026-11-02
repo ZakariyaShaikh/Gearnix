@@ -72,6 +72,21 @@ export const listOrders = async (userId, limit, offset) => {
     };
 };
 
+export const listAllOrders = async ({ status, search, limit, offset }) => {
+    const [rows] = await pool.query('CALL sp_list_all_orders(?, ?, ?, ?)', [
+        status,
+        search,
+        limit,
+        offset
+    ]);
+
+    // rows[0] = the count, rows[1] = the page of orders
+    return {
+        total: Number(rows[0][0].total),
+        items: rows[1]
+    };
+};
+
 export const getOrderDetail = async (userId, orderId) => {
     const [rows] = await pool.query('CALL sp_get_order_detail(?, ?)', [userId, orderId]);
 

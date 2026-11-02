@@ -26,3 +26,17 @@ export function formatDate(date) {
     year: 'numeric',
   }).format(value)
 }
+
+export function formatDateTime(date) {
+  if (!date) return ''
+  const value = new Date(date)
+  if (Number.isNaN(value.getTime())) return ''
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(value)
+}

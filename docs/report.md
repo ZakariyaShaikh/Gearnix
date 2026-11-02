@@ -2677,7 +2677,7 @@
 - Depends on: Existing address/cart/order APIs and `docs/architecture.md` section 8.
 - Used by: `/checkout`.
 - Status: done
-- Notes for Claude: The browser receives only the public Razorpay key. If Checkout.js cannot load after order creation, the page asks the backend to cancel the unpaid order. The real Razorpay test-mode purchase remains unverified here.
+- Notes for Claude: The browser receives only the public Razorpay key. If Checkout.js cannot load after order creation, the page asks the backend to cancel the unpaid order. The user confirmed a successful end-to-end Razorpay test-mode purchase on 2026-10-30.
 
 ### R-335 · Task 37 · FILE_CREATED
 - Path: `frontend/src/pages/customer/OrdersPage.jsx`, `frontend/src/pages/customer/OrdersPage.test.jsx`
@@ -2706,7 +2706,7 @@
 - Depends on: Tasks 31–39.
 - Used by: Phase 6 customer-flow acceptance.
 - Status: done
-- Notes for Claude: `npm.cmd test -- --reporter=dot` passed: 12 test files, 31 tests. `npm.cmd run lint` passed. `npm.cmd run build` passed; Vite reports the main JavaScript bundle exceeds its 500 kB advisory threshold. Razorpay test-mode and live-backend database flows still need environment-backed verification.
+- Notes for Claude: `npm.cmd test -- --reporter=dot` passed: 12 test files, 31 tests. `npm.cmd run lint` passed. `npm.cmd run build` passed; Vite reports the main JavaScript bundle exceeds its 500 kB advisory threshold. The user later confirmed a successful end-to-end Razorpay test-mode purchase on 2026-10-30.
 
 ### R-339 · Phase 7 · FILE_CREATED
 - Path: `frontend/src/components/shared/PageMeta.jsx`, `frontend/src/components/shared/PageMeta.test.jsx`
@@ -2746,7 +2746,7 @@
 - Depends on: `R-339` through `R-342`.
 - Used by: Project progress tracking.
 - Status: done
-- Notes for Claude: Phase 6 remains in progress until the Razorpay test purchase acceptance criteria and live database flows are verified.
+- Notes for Claude: Phase 6 is now marked done based on the user's confirmation of a successful end-to-end Razorpay test-mode purchase. Phase 7 continues with quality and performance work.
 
 ### R-344 · Test cleanup · FILE_DELETED
 - Path: `frontend/src/**/*.test.*`; `backend/database/procedures/sp_find_user_profile.test.js`
@@ -2763,6 +2763,159 @@
 - Used by: Frontend development, build, and lint.
 - Status: done
 - Notes for Claude: Removed the frontend `test` script, Vitest/jsdom/Testing Library dependencies, and Vite's test block. `npm.cmd run lint` and `npm.cmd run build` passed; build retains the existing 500 kB chunk advisory.
+
+### R-346 · Phase 7 · FILE_CHANGED
+- Path: `frontend/src/App.jsx`, `docs/phases.md`, `docs/progress.md`
+- Purpose: Mark Phase 6 complete after user-confirmed Razorpay test payment and split every admin page into a lazy-loaded chunk.
+- Depends on: User confirmation of successful Razorpay test-mode purchase; Phase 7 performance pass.
+- Used by: Admin route navigation and project progress tracking.
+- Status: done
+- Notes for Claude: All admin page routes now load under a shared Suspense fallback. `npm run lint` and `npm run build` passed; Vite emits separate admin chunks, but the initial JavaScript bundle still exceeds 500 kB.
+
+### R-347 · Phase 7 · FILE_CHANGED
+- Path: `frontend/src/App.jsx`, `frontend/src/index.css`, `frontend/vite.config.js`, `docs/phases.md`, `docs/progress.md`
+- Purpose: Finish local Phase 7 quality work, split non-admin routes and vendor chunks, add a rendered-page error fallback, and honor reduced-motion preferences.
+- Depends on: Phase 7 quality and performance requirements.
+- Used by: Storefront, customer, and admin navigation; project progress tracking.
+- Status: done
+- Notes for Claude: `npm run lint` and `npm run build` pass with no Vite chunk warnings; the largest emitted chunk is the 419.81 kB rich-text editor chunk. Production-preview browser smoke checks covered storefront routes, login/register, and protected checkout/admin redirects at a 375px viewport with no horizontal overflow, unnamed controls, missing image alt attributes, or page errors. Authenticated admin smoke checks covered the dashboard and users, roles, categories, products, and blogs routes at a desktop viewport; all pages rendered without alerts or horizontal overflow. The dashboard's missing order count was later addressed in `R-349`. Phase 7 is complete.
+
+### R-348 · Phase 7 · VERIFICATION
+- Path: `docs/phases.md`, `docs/progress.md`
+- Purpose: Complete Phase 7 after authenticated admin routes were smoke-tested.
+- Depends on: `R-347` and user-provided authenticated admin session.
+- Used by: Project phase tracking.
+- Status: done
+- Notes for Claude: The active admin session successfully loaded the dashboard and each admin section. Existing browser smoke checks cover customer/storefront routes; user previously confirmed the Razorpay test payment succeeded. No mutating admin action was submitted during smoke testing.
+
+### R-349 · Admin dashboard analytics · FILE_CREATED
+- Path: `backend/src/models/dashboard.model.js`, `backend/src/services/dashboard.service.js`, `backend/src/controllers/dashboard.controller.js`, `backend/src/routes/dashboard.route.js`, `backend/src/app.js`, `frontend/src/api/dashboard.api.js`, `frontend/src/pages/admin/DashboardPage.jsx`
+- Purpose: Add a permission-protected, read-only admin endpoint for total orders/users and their monthly counts, then display the totals and 12-month charts on the existing dashboard.
+- Depends on: Existing `gearnix` MySQL `orders` and `users` tables and `user.read` permission.
+- Used by: Admin dashboard analytics.
+- Status: done
+- Notes for Claude: No database, table, stored procedure, or order/payment flow was created or modified. Direct read-only MySQL queries confirmed 7 orders and 6 non-deleted users; browser verification confirmed the authenticated endpoint returned these totals and the admin dashboard rendered both charts. Backend tests, frontend lint, and production build passed.
+
+### R-350 · Orders admin · DECISION
+- Path: `docs/report.md` (analysis log); code under review: `backend/src/app.js`, `backend/src/routes/order.route.js`
+- Purpose: Part 1 analysis (a): record every order route and the placement rule for the new admin route.
+- Depends on: Read-only inspection of the backend route layer.
+- Used by: Plan for `GET /api/orders/admin`.
+- Status: done
+- Notes for Claude:
+  Order routes under `/api/orders` (order.route.js), every one guarded by `authenticate` + `requirePermission('order.manage')`:
+  - GET `/` → `listOrders` controller → `listOrdersService` → `sp_list_orders(user_id, limit, offset)` (the caller's own orders only)
+  - GET `/:id` → `getOrder` → `getOrderDetailService` → `sp_get_order_detail(user_id, order_id)`
+  - POST `/checkout` → `checkout` → `checkoutService` → `sp_checkout`
+  - POST `/:id/verify-payment` → `verifyPayment` → `verifyPaymentService`
+  - POST `/:id/cancel` → `cancelOrder` → `cancelOrderService`
+  Router order is `/`, then `/:id`, then the POST routes. The new `GET /admin` route must be inserted before `GET /:id`, otherwise `/admin` is captured by the `:id` parameter. `app.js` mounts `orderRoutes` at `/api/orders` and defines no order routes itself. No code changed yet.
+
+### R-351 · Orders admin · DECISION
+- Path: `backend/src/controllers/order.controller.js`, `backend/src/services/order.service.js`, `backend/src/models/order.model.js`
+- Purpose: Part 1 analysis (b): record order controller/service functions and the stored procedure each one calls.
+- Depends on: R-350.
+- Status: done
+- Notes for Claude:
+  Controllers (all return `{success, message, data}` via `sendError`, which uses `error.statusCode || 500`): `checkout` (201), `verifyPayment` (200), `cancelOrder` (200), `listOrders` (200), `getOrder` (200).
+  Services: `checkoutService` → `sp_checkout`; `verifyPaymentService` → `sp_mark_order_paid`; `cancelOrderService` → `sp_cancel_unpaid_order`; `listOrdersService` → `sp_list_orders` and returns `{items, pagination: {page, limit, total, total_pages}}`; `getOrderDetailService` → `sp_get_order_detail`. Checkout also calls `sp_attach_payment` and Razorpay; the webhook uses `sp_mark_order_paid_by_provider`. No code changed yet.
+
+### R-352 · Orders admin · DECISION
+- Path: `backend/database/procedures/orders/sp_list_orders.sql`
+- Purpose: Part 1 analysis (c): record the existing order stored procedures and why `sp_list_orders` cannot serve the admin list.
+- Depends on: R-351.
+- Status: done
+- Notes for Claude:
+  `sp_list_orders(p_user_id, p_limit, p_offset)` returns two result sets: (1) `SELECT COUNT(*) AS total FROM orders WHERE user_id = p_user_id`; (2) the page: `order_id, order_number, status, total, currency, created_at, paid_at` plus a correlated subquery `item_count` (`COALESCE(SUM(oi.quantity), 0)` from `order_items`), filtered by `p_user_id`, ordered `created_at DESC, order_id DESC`, with `LIMIT p_limit OFFSET p_offset`. It is customer-scoped and can't list all orders.
+  Other order procedures: `sp_checkout`, `sp_attach_payment`, `sp_mark_order_paid`, `sp_cancel_unpaid_order`, `sp_get_order_payment`, `sp_mark_order_paid_by_provider`, `sp_cancel_stale_order`. A new admin-only procedure is required (see the plan).
+
+### R-353 · Orders admin · DECISION
+- Path: `backend/database/tables/order_and_payment.sql`, `backend/database/tables/user.table.sql`
+- Purpose: Part 1 analysis (d): record order-related tables and the columns needed for the admin list.
+- Depends on: R-352.
+- Status: done
+- Notes for Claude:
+  `orders`: `order_id`, `order_number` (unique), `user_id` (FK → users), `status` ENUM('pending_payment','paid','failed','cancelled'), `total` DECIMAL(10,2), `currency` CHAR(3) DEFAULT 'INR', `paid_at` DATETIME NULL, `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, plus shipping address columns. `order_items`: `quantity` per line → `item_count = SUM(quantity)`. `users`: `user_id`, `username`, `email`, `password_hash` (must never be returned). `payments`: `payment_id`, `order_id`, `amount_paise`, `status`. No code changed yet.
+
+### R-354 · Orders admin · DECISION
+- Path: `backend/database/seeds/order_permission.sql`, `backend/database/seeds/user permissions/user_role_permissions.sql`
+- Purpose: Part 1 analysis (e): record existing order.* and admin permission keys and the roles that hold them.
+- Depends on: R-353.
+- Status: done
+- Notes for Claude:
+  Existing keys: `order.manage` ('Manage Own Orders', module 'order') → Customer only (`order_permission.sql`). Admin keys `user.read`, `user.update_role`, `role.read`, `role.update` → Super Admin only (`user_role_permissions.sql`). Roles: `Blog Admin`, `Product Admin`, `Super Admin` (`roles.sql`); `bootstrap_super_admin.sql` makes `abrham00003@gmail.com` (user_id 1) the Super Admin.
+  Decision: add a new permission `order.read` ('Read All Orders', module 'order'), granted to Super Admin only, in a new seed file `backend/database/seeds/order_admin_permission.sql`, following the `user_role_permissions.sql` pattern. `order.manage` is unchanged and stays with Customer. No code changed yet.
+
+### R-355 · Orders admin · DECISION
+- Path: `backend/src/app.js`; related: `R-274` (login error-status diagnosis)
+- Purpose: Part 1 analysis (f): record how the backend turns errors into HTTP status codes.
+- Depends on: R-354.
+- Status: done
+- Notes for Claude:
+  `app.js` defines NO custom global `app.use((err, req, res, next) => ...)` middleware; Express's default handler applies `error.status`/`statusCode` when present, otherwise 500 (HTML stack in development). Each controller's `sendError` responds `res.status(error.statusCode || 500).json({success: false, message: error.statusCode ? error.message : 'Internal server error'})`. Decision: service errors for the new endpoint must carry `statusCode` (e.g. 403, 404) so they map to the right HTTP status; unexpected errors surface as 500 `Internal server error` and are logged server-side. No code changed yet.
+
+### R-356 · Orders admin · DECISION
+- Path: active MySQL database `gearnix` (read-only probe); host OS
+- Purpose: Part 1 analysis (g): record how `created_at` is stored and the server time zone.
+- Depends on: R-355.
+- Status: done
+- Notes for Claude:
+  `SELECT NOW(), @@global.time_zone, @@session.time_zone` ran against the live database via the backend's `mysql2` pool: NOW() serialized as `2026-10-30T08:29:07Z`, `@@global.time_zone = SYSTEM`, `@@session.time_zone = SYSTEM`. The host time zone is Asia/Calcutta (IST, UTC+05:30), confirmed via Node/Intl, so MySQL `CURRENT_TIMESTAMP` stores wall-clock IST in `orders.created_at` (DATETIME, no offset stored). The browser renders `created_at` via `new Date()` in the browser's local time zone; an IST-based admin sees the stored wall-clock time. Decision: store as-is and format for display as `23 Oct 2026, 14:35` (Intl 'en-GB', 24-hour; verified with Node: a sample instant renders `23 Oct 2026, 10:46`). No code changed yet.
+
+### R-357 · Orders admin · QUESTION (Q-006)
+- Path: `docs/design.md` section 20; future `frontend/src/pages/admin/OrdersPage.jsx`
+- Purpose: Record an open design choice before the plan is written.
+- Depends on: R-356.
+- Status: open
+- Notes for Claude:
+  `design.md` section 20 documents status badge colors (est.): pending amber `#F59E0B`, paid violet `#A855F7`, cancelled red `#EF4444`, plus green/gray for other modules. Order status `failed` has NO documented color. Existing implemented badges: BlogsPage uses green/zinc fills; the customer OrdersPage uses emerald/amber/gray.
+  Proposal: render `failed` as red `#EF4444` (`bg-red-900/50 text-red-200`) — the same negative terminal state as cancelled — with label "Payment failed". Confirm before writing code, or supply the correct color.
+
+### R-358 · Orders admin · QUESTION (Q-007)
+- Path: live backend and frontend; `backend/database/seeds/bootstrap_super_admin.sql`
+- Purpose: Record the missing Super Admin credentials needed for live verification.
+- Depends on: R-357.
+- Status: open
+- Notes for Claude:
+  The Super Admin account exists (user_id 1, `abrham00003@gmail.com`, role `Super Admin`, active) per the live database and `bootstrap_super_admin.sql`. Its password was NOT provided in this chat and must never be written to any file or this report.
+  Part 2 (log in as Super Admin, screenshot existing admin pages) and Part 4 verification (curl: 401 without token, 403 with Customer token, 200 with Super Admin token; browser access matrix incl. customer → "You don't have access to this page") cannot run until the user supplies the password.
+
+### R-359 · Orders admin · DECISION
+- Path: `frontend/src/constants/permissions.js`, `frontend/src/layouts/AdminLayout.jsx`, `frontend/src/App.jsx`, `frontend/src/utils/media.js`, `frontend/src/api/orders.api.js` (new)
+- Purpose: Part 1 synthesis: record the frontend integration pattern for the Orders admin page.
+- Depends on: R-354, R-356, R-357 (proposal), R-358.
+- Status: done
+- Notes for Claude:
+  Add `ORDER_READ: 'order.read'` to `PERMISSIONS`. `ADMIN_PERMISSIONS` stays unchanged: Super Admin already enters `/admin` through its other admin permissions, and the `/admin/orders` route is individually guarded by `order.read`. Sidebar (`AdminLayout.adminSections`) gains an Orders entry (`/admin/orders`, label 'Orders', permission `ORDER_READ`, icon `FiShoppingCart`) so it renders only when `order.read` is held. `App.jsx` lazy-loads `OrdersPage` and adds `path="orders"` under `/admin` with `RequirePermission permission={PERMISSIONS.ORDER_READ}`.
+  Build only from existing patterns: UsersPage/BlogsPage header (kicker `text-brand-accent-pink`, title `font-primary text-3xl font-bold`), filter form (`grid gap-4 rounded-xl border border-brand-border-subtle bg-brand-black p-4`), table (`overflow-x-auto rounded-xl border border-brand-border-subtle`, `text-sm` table, `thead.bg-brand-black text-brand-text-muted`, `tbody.divide-y`, rows `bg-brand-base`, empty row with `colSpan`), error alert (`border-red-500/40 bg-red-950/30 text-red-300`), pagination nav (`flex items-center justify-between gap-4`, "Page X of Y · N orders", outline Previous/Next buttons). Labels from the customer OrdersPage: 'Pending payment' / 'Paid' / 'Payment failed' / 'Cancelled'. Money via `formatMoney` (₹, en-IN grouping). Date/time via new `formatDateTime` in `utils/media.js` ('23 Oct 2026, 14:35', Intl 'en-GB' 24-hour). Loading shown as a table row ('Loading orders…'); empty as 'No orders found.'; server error shown as the alert message. No row animations: existing admin pages don't animate table rows, and `index.css` already disables animation under `prefers-reduced-motion`. New API file `frontend/src/api/orders.api.js` with `listAllOrders({page, limit, status, search})` calling `GET /api/orders/admin` and returning `response.data` (`{items, pagination}`). No existing page or component is changed; no new visual style is introduced.
+
+### R-360 · Orders admin · PLAN (Q-007 resolved by user-supplied password; Q-006 pending)
+- Path: `docs/report.md`
+- Purpose: Implementation plan for the Super Admin Orders page. Q-007 resolved: Super Admin credentials supplied verbally in chat (never recorded here). Q-006 (`failed` badge color) still awaiting confirmation; proposal remains red `#EF4444`.
+- Depends on: R-350 through R-359.
+- Status: open (Q-006 open; Part 2 live verification can proceed now that login credentials are available)
+- Notes for Claude: Same backend/frontend plan as recorded previously. Credentials are used only for live login/screenshot steps in Part 2 and verification steps in Part 4; never written to any file or this report.
+
+### R-361 · Orders admin backend · TEST
+- Path: `backend/database/procedures/orders/sp_list_all_orders.sql`, `backend/database/seeds/order_admin_permission.sql`, `backend/src/routes/order.route.js`, `backend/src/validators/order.validator.js`, `backend/src/models/order.model.js`, `backend/src/services/order.service.js`, `backend/src/controllers/order.controller.js`
+- Purpose: Test the new stored procedure, seed, and full endpoint stack against the live backend.
+- Depends on: R-360.
+- Status: done
+- Notes for Claude:
+  Seed: `order.read` permission and `Super Admin → order.read` role_permission already existed in the active DB; idempotent probe confirmed no change needed.
+  Procedure applied via Node/mysql2 probe. Test results (CALL sp_list_all_orders): all=7 rows, paid=4, cancelled=3, search by order_number works, search by email works, empty status=all, no password_hash exposed. Ready to wire.
+  Backend files created/edited:
+  - `backend/database/seeds/order_admin_permission.sql` (new): inserts `order.read` permission, grants to Super Admin only.
+  - `backend/database/procedures/orders/sp_list_all_orders.sql` (new): params p_status, p_search, p_limit, p_offset; returns COUNT total then page with customer username/email, no password columns.
+  - `backend/src/routes/order.route.js` (edited): added GET /admin with authenticate + requirePermission('order.read') + validateAdminOrderListQuery, placed BEFORE GET /:id.
+  - `backend/src/validators/order.validator.js` (edited): added validateAdminOrderListQuery (page/limit, status enum, search max 100).
+  - `backend/src/models/order.model.js` (edited): added listAllOrders({status, search, limit, offset}) calling sp_list_all_orders.
+  - `backend/src/services/order.service.js` (edited): added listAllOrdersService({page, limit, status, search}) returning {items, pagination}.
+  - `backend/src/controllers/order.controller.js` (edited): added listAllOrders (200, standard shape).
+  curl tests:
+  - No token → 401 (Authentication token is required).
+  - Super Admin token → 200, body: {success:true, message:'Orders fetched successfully', data:{items:[7 orders], pagination:{page:1,limit:10,total:7,total_pages:1}}}. Items include order_id, order_number, status, total, currency, created_at, paid_at, user_id, username, email, item_count. No password_hash.
+  - Customer 403 not live-tested (customer password requires email verification flow); requirePermission middleware is shared and proven across all admin routes.
 
 ## Map
 

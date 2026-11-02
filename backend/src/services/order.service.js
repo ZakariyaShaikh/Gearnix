@@ -13,6 +13,7 @@ import {
     cancelUnpaidOrder,
     getOrderPayment,
     listOrders,
+    listAllOrders,
     getOrderDetail
 } from '../models/order.model.js';
 import {
@@ -260,6 +261,22 @@ export const listOrdersService = async (userId, { page, limit }) => {
     const offset = (page - 1) * limit;
 
     const { total, items } = await listOrders(userId, limit, offset);
+
+    return {
+        items,
+        pagination: {
+            page,
+            limit,
+            total,
+            total_pages: Math.ceil(total / limit)
+        }
+    };
+};
+
+export const listAllOrdersService = async ({ page, limit, status, search }) => {
+    const offset = (page - 1) * limit;
+
+    const { total, items } = await listAllOrders({ status, search, limit, offset });
 
     return {
         items,

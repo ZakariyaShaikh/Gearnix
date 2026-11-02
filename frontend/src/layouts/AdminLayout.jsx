@@ -1,6 +1,6 @@
 import { createElement } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
-import { FiBookOpen, FiBox, FiGrid, FiHome, FiUsers } from 'react-icons/fi'
+import { FiBookOpen, FiBox, FiGrid, FiHome, FiShoppingCart, FiUsers } from 'react-icons/fi'
 import { Logo } from '@/components/shared/Logo'
 import { useAuth } from '@/auth/AuthContext'
 import { PERMISSIONS } from '@/constants/permissions'
@@ -12,6 +12,7 @@ const adminSections = [
   { to: '/admin/categories', label: 'Categories', permission: PERMISSIONS.CATEGORY_READ, icon: FiGrid },
   { to: '/admin/products', label: 'Products', permission: PERMISSIONS.PRODUCT_READ, icon: FiBox },
   { to: '/admin/blogs', label: 'Blogs', permission: PERMISSIONS.BLOG_READ, icon: FiBookOpen },
+  { to: '/admin/orders', label: 'Orders', permission: PERMISSIONS.ORDER_READ, icon: FiShoppingCart },
 ]
 
 export function AdminLayout() {

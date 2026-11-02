@@ -70,3 +70,47 @@ export const validateOrderListQuery = (req, res, next) => {
     req.listQuery = { page, limit };
     next();
 };
+
+export const validateAdminOrderListQuery = (req, res, next) => {
+    const query = req.query || {};
+
+    const page = query.page === undefined ? 1 : Number(query.page);
+
+    if (!Number.isInteger(page) || page < 1) {
+        return res.status(400).json({
+            success: false,
+            message: 'Page must be a whole number, 1 or more'
+        });
+    }
+
+    const limit = query.limit === undefined ? 10 : Number(query.limit);
+
+    if (!Number.isInteger(limit) || limit < 1 || limit > 50) {
+        return res.status(400).json({
+            success: false,
+            message: 'Limit must be a whole number between 1 and 50'
+        });
+    }
+
+    const validStatuses = ['pending_payment', 'paid', 'failed', 'cancelled'];
+    const status = query.status === undefined ? null : String(query.status).trim();
+
+    if (status !== null && status !== '' && !validStatuses.includes(status)) {
+        return res.status(400).json({
+            success: false,
+            message: `Status must be one of: ${validStatuses.join(', ')}`
+        });
+    }
+
+    const search = query.search === undefined ? null : String(query.search).trim();
+
+    if (search !== null && search.length > 100) {
+        return res.status(400).json({
+            success: false,
+            message: 'Search must be at most 100 characters'
+        });
+    }
+
+    req.listQuery = { page, limit, status: status || null, search: search || null };
+    next();
+};

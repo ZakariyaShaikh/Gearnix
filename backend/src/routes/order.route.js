@@ -6,13 +6,15 @@ import {
     verifyPayment,
     cancelOrder,
     listOrders,
-    getOrder
+    getOrder,
+    listAllOrders
 } from '../controllers/order.controller.js';
 import {
     validateCheckout,
     validateVerifyPayment,
     validateOrderIdParam,
-    validateOrderListQuery
+    validateOrderListQuery,
+    validateAdminOrderListQuery
 } from '../validators/order.validator.js';
 
 const router = express.Router();
@@ -24,6 +26,15 @@ router.get(
     requirePermission('order.manage'),
     validateOrderListQuery,
     listOrders
+);
+
+// All orders (Super Admin only): status filter, search, pagination
+router.get(
+    '/admin',
+    authenticate,
+    requirePermission('order.read'),
+    validateAdminOrderListQuery,
+    listAllOrders
 );
 
 // One order with its items and payment

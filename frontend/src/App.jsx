@@ -1,112 +1,191 @@
-import { lazy, Suspense } from 'react'
+import { Component, lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { RequireLogin } from '@/auth/RequireLogin'
 import { RequirePermission } from '@/auth/RequirePermission'
 import { ADMIN_PERMISSIONS, PERMISSIONS } from '@/constants/permissions'
-import { AdminLayout } from '@/layouts/AdminLayout'
 import { StoreLayout } from '@/layouts/StoreLayout'
-import { CategoriesPage } from '@/pages/admin/CategoriesPage'
-import { DashboardPage } from '@/pages/admin/DashboardPage'
-import { ProductsPage } from '@/pages/admin/ProductsPage'
-import { RolesPage } from '@/pages/admin/RolesPage'
-import { UsersPage } from '@/pages/admin/UsersPage'
-import { BlogDetailPage } from '@/pages/public/BlogDetailPage'
-import { BlogsPage } from '@/pages/public/BlogsPage'
 import { HomePage } from '@/pages/public/HomePage'
-import { LoginPage } from '@/pages/public/LoginPage'
-import { ProductDetailPage } from '@/pages/public/ProductDetailPage'
-import { ProfilePage } from '@/pages/public/ProfilePage'
-import { RegisterPage } from '@/pages/public/RegisterPage'
-import { AddressesPage } from '@/pages/customer/AddressesPage'
-import { CartPage } from '@/pages/customer/CartPage'
-import { WishlistPage } from '@/pages/customer/WishlistPage'
-import { CheckoutPage } from '@/pages/customer/CheckoutPage'
-import { OrdersPage } from '@/pages/customer/OrdersPage'
-import { OrderDetailPage } from '@/pages/customer/OrderDetailPage'
-import { ProductsPage as StoreProductsPage } from '@/pages/public/ProductsPage'
-import { PlaceholderPage } from '@/pages/public/PlaceholderPage'
 
-const BlogsAdminPage = lazy(() =>
-  import('@/pages/admin/BlogsPage').then((module) => ({
-    default: module.BlogsAdminPage,
-  })),
+const AdminLayout = lazy(() =>
+  import('@/layouts/AdminLayout').then((module) => ({ default: module.AdminLayout })),
 )
+const DashboardPage = lazy(() =>
+  import('@/pages/admin/DashboardPage').then((module) => ({ default: module.DashboardPage })),
+)
+const UsersPage = lazy(() =>
+  import('@/pages/admin/UsersPage').then((module) => ({ default: module.UsersPage })),
+)
+const RolesPage = lazy(() =>
+  import('@/pages/admin/RolesPage').then((module) => ({ default: module.RolesPage })),
+)
+const CategoriesPage = lazy(() =>
+  import('@/pages/admin/CategoriesPage').then((module) => ({ default: module.CategoriesPage })),
+)
+const AdminProductsPage = lazy(() =>
+  import('@/pages/admin/ProductsPage').then((module) => ({ default: module.ProductsPage })),
+)
+const BlogsAdminPage = lazy(() =>
+  import('@/pages/admin/BlogsPage').then((module) => ({ default: module.BlogsAdminPage })),
+)
+const AdminOrdersPage = lazy(() =>
+  import('@/pages/admin/OrdersPage').then((module) => ({ default: module.OrdersPage })),
+)
+const StoreProductsPage = lazy(() =>
+  import('@/pages/public/ProductsPage').then((module) => ({ default: module.ProductsPage })),
+)
+const ProductDetailPage = lazy(() =>
+  import('@/pages/public/ProductDetailPage').then((module) => ({ default: module.ProductDetailPage })),
+)
+const BlogsPage = lazy(() =>
+  import('@/pages/public/BlogsPage').then((module) => ({ default: module.BlogsPage })),
+)
+const BlogDetailPage = lazy(() =>
+  import('@/pages/public/BlogDetailPage').then((module) => ({ default: module.BlogDetailPage })),
+)
+const LoginPage = lazy(() =>
+  import('@/pages/public/LoginPage').then((module) => ({ default: module.LoginPage })),
+)
+const RegisterPage = lazy(() =>
+  import('@/pages/public/RegisterPage').then((module) => ({ default: module.RegisterPage })),
+)
+const ProfilePage = lazy(() =>
+  import('@/pages/public/ProfilePage').then((module) => ({ default: module.ProfilePage })),
+)
+const CartPage = lazy(() =>
+  import('@/pages/customer/CartPage').then((module) => ({ default: module.CartPage })),
+)
+const CheckoutPage = lazy(() =>
+  import('@/pages/customer/CheckoutPage').then((module) => ({ default: module.CheckoutPage })),
+)
+const OrdersPage = lazy(() =>
+  import('@/pages/customer/OrdersPage').then((module) => ({ default: module.OrdersPage })),
+)
+const OrderDetailPage = lazy(() =>
+  import('@/pages/customer/OrderDetailPage').then((module) => ({ default: module.OrderDetailPage })),
+)
+const WishlistPage = lazy(() =>
+  import('@/pages/customer/WishlistPage').then((module) => ({ default: module.WishlistPage })),
+)
+const AddressesPage = lazy(() =>
+  import('@/pages/customer/AddressesPage').then((module) => ({ default: module.AddressesPage })),
+)
+
+class RouteErrorBoundary extends Component {
+  state = { hasError: false }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error, info) {
+    console.error('A page failed to render.', error, info)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <main role="alert" className="mx-auto max-w-xl px-4 py-16 text-center">
+          <h1 className="font-primary text-2xl font-bold">This page could not be displayed</h1>
+          <p className="mt-3 text-brand-text-muted">Please reload the page and try again.</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-6 min-h-11 rounded-full bg-brand-accent-pink px-6 font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          >
+            Reload page
+          </button>
+        </main>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
+function withPageLoading(element) {
+  return (
+    <Suspense fallback={<p role="status" className="py-16 text-center">Loading page…</p>}>
+      {element}
+    </Suspense>
+  )
+}
 
 function App() {
   return (
-    <Routes>
+    <RouteErrorBoundary>
+      <Routes>
       <Route element={<StoreLayout />}>
         <Route index element={<HomePage />} />
-        <Route path="products" element={<StoreProductsPage />} />
-        <Route path="products/:slug" element={<ProductDetailPage />} />
-        <Route path="blogs" element={<BlogsPage />} />
-        <Route path="blogs/:slug" element={<BlogDetailPage />} />
-        <Route path="login" element={<LoginPage />} />
-        <Route path="register" element={<RegisterPage />} />
+        <Route path="products" element={withPageLoading(<StoreProductsPage />)} />
+        <Route path="products/:slug" element={withPageLoading(<ProductDetailPage />)} />
+        <Route path="blogs" element={withPageLoading(<BlogsPage />)} />
+        <Route path="blogs/:slug" element={withPageLoading(<BlogDetailPage />)} />
+        <Route path="login" element={withPageLoading(<LoginPage />)} />
+        <Route path="register" element={withPageLoading(<RegisterPage />)} />
         <Route
           path="cart"
-          element={
+          element={withPageLoading(
             <RequireLogin>
               <CartPage />
-            </RequireLogin>
-          }
+            </RequireLogin>,
+          )}
         />
         <Route
           path="checkout"
-          element={
+          element={withPageLoading(
             <RequireLogin>
               <CheckoutPage />
-            </RequireLogin>
-          }
+            </RequireLogin>,
+          )}
         />
         <Route
           path="orders"
-          element={
+          element={withPageLoading(
             <RequireLogin>
               <OrdersPage />
-            </RequireLogin>
-          }
+            </RequireLogin>,
+          )}
         />
         <Route
           path="orders/:id"
-          element={
+          element={withPageLoading(
             <RequireLogin>
               <OrderDetailPage />
-            </RequireLogin>
-          }
+            </RequireLogin>,
+          )}
         />
         <Route
           path="wishlist"
-          element={
+          element={withPageLoading(
             <RequireLogin>
               <WishlistPage />
-            </RequireLogin>
-          }
+            </RequireLogin>,
+          )}
         />
         <Route
           path="addresses"
-          element={
+          element={withPageLoading(
             <RequireLogin>
               <AddressesPage />
-            </RequireLogin>
-          }
+            </RequireLogin>,
+          )}
         />
         <Route
           path="profile"
-          element={
+          element={withPageLoading(
             <RequireLogin>
               <ProfilePage />
-            </RequireLogin>
-          }
+            </RequireLogin>,
+          )}
         />
       </Route>
       <Route
         path="/admin"
-        element={
+        element={withPageLoading(
           <RequirePermission anyOf={ADMIN_PERMISSIONS}>
             <AdminLayout />
-          </RequirePermission>
-        }
+          </RequirePermission>,
+        )}
       >
         <Route index element={<DashboardPage />} />
         <Route
@@ -137,7 +216,7 @@ function App() {
           path="products"
           element={
             <RequirePermission permission={PERMISSIONS.PRODUCT_READ}>
-              <ProductsPage />
+              <AdminProductsPage />
             </RequirePermission>
           }
         />
@@ -145,15 +224,22 @@ function App() {
           path="blogs"
           element={
             <RequirePermission permission={PERMISSIONS.BLOG_READ}>
-              <Suspense fallback={<p role="status">Loading blog admin…</p>}>
-                <BlogsAdminPage />
-              </Suspense>
+              <BlogsAdminPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="orders"
+          element={
+            <RequirePermission permission={PERMISSIONS.ORDER_READ}>
+              <AdminOrdersPage />
             </RequirePermission>
           }
         />
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      <Route path="*" element={<Navigate to="/" replace />}       />
+      </Routes>
+    </RouteErrorBoundary>
   )
 }
 

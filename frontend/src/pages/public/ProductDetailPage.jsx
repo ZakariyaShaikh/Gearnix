@@ -1,55 +1,31 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { FiArrowRight, FiHeart, FiShoppingCart } from 'react-icons/fi'
 import { toast } from 'sonner'
 import { addCartItem, addWishlistItem } from '@/api/customer.api'
-import { getPublicProductBySlug, listPublicProducts } from '@/api/catalog.api'
 import { Button } from '@/components/ui/button'
 import { ProductCard } from '@/components/shared/ProductCard'
 import { useAuth } from '@/auth/AuthContext'
 import { formatMoney, getMediaUrl } from '@/utils/media'
 import { PageMeta } from '@/components/shared/PageMeta'
+import { useProductDetail } from '@/hooks/useProductDetail'
 
 export function ProductDetailPage() {
   const { slug } = useParams()
   const { status } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
-  const [response, setResponse] = useState({ slug: null, product: null, error: '' })
+  const {
+    loading,
+    product,
+    error,
+    relatedLoading,
+    relatedProducts,
+    relatedError,
+  } = useProductDetail(slug)
   const [selection, setSelection] = useState({ slug: null, index: 0 })
-  const [relatedResponse, setRelatedResponse] = useState({ slug: null, items: [], error: '' })
-  const loading = response.slug !== slug
-  const product = loading ? null : response.product
-  const error = loading ? '' : response.error
   const selectedImage = selection.slug === slug ? selection.index : 0
-  const relatedLoading = relatedResponse.slug !== slug
-  const relatedProducts = relatedLoading ? [] : relatedResponse.items
-  const relatedError = relatedLoading ? '' : relatedResponse.error
   const [action, setAction] = useState('')
-
-  useEffect(() => {
-    let active = true
-    getPublicProductBySlug(slug).then((result) => {
-      if (!active) return
-      setResponse({ slug, product: result, error: '' })
-    }).catch((requestError) => {
-      if (!active) return
-      setResponse({ slug, product: null, error: requestError.message })
-    })
-
-    listPublicProducts({ page: 1, limit: 8 }).then((result) => {
-      if (!active) return
-      setRelatedResponse({
-        slug,
-        items: result.items.filter((item) => item.slug !== slug).slice(0, 4),
-        error: '',
-      })
-    }).catch((requestError) => {
-      if (active) setRelatedResponse({ slug, items: [], error: requestError.message })
-    })
-
-    return () => { active = false }
-  }, [slug])
 
   async function performAction(type) {
     if (status !== 'authenticated') {
@@ -60,7 +36,7 @@ export function ProductDetailPage() {
     try {
       if (type === 'cart') await addCartItem(product.product_id)
       else await addWishlistItem(product.product_id)
-      window.dispatchEvent(new Event('gearnix:cart-updated'))
+      if (type === 'cart') window.dispatchEvent(new Event('gearnix:cart-updated'))
       toast.success(type === 'cart' ? 'Added to cart.' : 'Added to wishlist.')
     } catch (requestError) {
       toast.error(requestError.message)
@@ -153,7 +129,7 @@ export function ProductDetailPage() {
 
             <div className="mt-8 grid w-full gap-3 sm:grid-cols-[minmax(0,1fr)_3.25rem]">
               <Button
-                disabled={!inStock || action === 'cart'}
+                disabled={!inStock || Boolean(action)}
                 onClick={() => performAction('cart')}
                 className="min-h-12 gap-2 rounded-full bg-[#18151b] px-6 text-sm font-semibold text-white transition-colors hover:bg-fuchsia-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
@@ -164,7 +140,7 @@ export function ProductDetailPage() {
                 type="button"
                 variant="outline"
                 aria-label="Add to wishlist"
-                disabled={action === 'wishlist'}
+                disabled={Boolean(action)}
                 onClick={() => performAction('wishlist')}
                 className="bg-white rounded-full min-h-12 border-zinc-300 text-zinc-800 hover:border-fuchsia-600 hover:text-fuchsia-700"
               >

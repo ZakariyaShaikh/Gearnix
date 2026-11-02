@@ -96,7 +96,7 @@ Complete and tested. Covers:
 - Every page works on a phone-sized screen
 - Only published blogs and visible products appear
 
-## Phase 6: Customer account and checkout — IN PROGRESS
+## Phase 6: Customer account and checkout — DONE
 
 **Goal:** a customer can register, shop, pay, and track orders.
 
@@ -114,20 +114,22 @@ Complete and tested. Covers:
 - A payment that fails leaves the order cancelled and the stock released
 - The customer sees a clear result after payment, whether it succeeded or not
 
-## Phase 7: Quality pass — IN PROGRESS
+## Phase 7: Quality pass — DONE
 
 **Goal:** the app is solid enough to show real users.
 
 **Deliverables:**
-- Loading skeletons, empty states, and error states on every page
+- Loading skeletons, empty states, and error states across public, customer, and admin pages
 - Accessibility pass: keyboard navigation, focus rings, labels, contrast
 - Reduced-motion support for all animations
-- SEO basics: page titles, descriptions, Open Graph tags on storefront pages
-- Current start: route-aware titles, descriptions, canonical URLs, and Open Graph metadata on the home, product, and blog pages
-- Performance pass: image sizes, lazy loading, code splitting for admin
-- Smoke tests for the main purchase and admin flows
+- SEO basics: page titles, descriptions, canonical URLs, and Open Graph tags on storefront pages
+- Completed: route-aware titles, descriptions, canonical URLs, and Open Graph metadata on the home, product, and blog pages
+- Completed: lazy-loaded storefront, customer, and admin routes with loading states
+- Completed: production image lazy loading and responsive image containers
+- Smoke checked: production storefront routes and customer/admin route guards at a 375px viewport
+- Smoke checked: authenticated dashboard, users, roles, categories, products, and blogs admin routes
 
-**Done when:** all of the above are checked, and no page shows a raw error or blank screen.
+**Done when:** all of the above are checked, no page shows a raw error or blank screen, and the main customer and admin flows pass smoke checks.
 
 ## Phase 8: Staging deployment ⬜
 
