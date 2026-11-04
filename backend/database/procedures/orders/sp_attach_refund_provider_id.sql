@@ -7,11 +7,12 @@ CREATE PROCEDURE sp_attach_refund_provider_id(
     IN p_provider_refund_id VARCHAR(100)
 )
 BEGIN
-    -- Sirf tab save karo jab abhi tak koi ID nahi hai (dobara call safe hai)
+    -- Real ID tabhi save karo jab abhi tak koi ID nahi hai, ya claim marker hai
     UPDATE refunds
     SET provider_refund_id = p_provider_refund_id
     WHERE refund_id = p_refund_id
-      AND provider_refund_id IS NULL;
+      AND (provider_refund_id IS NULL
+           OR provider_refund_id = CONCAT('claim_', p_refund_id));
 
     SELECT refund_id, provider_refund_id, status
     FROM refunds

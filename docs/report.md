@@ -3068,3 +3068,174 @@ None.
 | A-003 | Keep the address placeholder; do not invent a real address. |
 | A-004 | Keep social URLs empty until supplied. |
 | A-005 | Keep phone and email placeholders until supplied. |
+
+### R-362 · Refund frontend Step 0A · QUESTION
+- Path: rontend/src/pages/admin/OrdersPage.jsx, ackend/src/controllers/order.controller.js
+- Purpose: Record refund ID visibility blocker result.
+- Depends on: R-361
+- Used by: Flow F admin retry.
+- Status: open
+- Notes for Claude: GET /api/orders/:id and GET /api/orders/admin do not expose a refund object or refund_id. Admin retry endpoint requires refundId. User answered: backend should add refund info to order responses. Backend change remains out of scope per non-negotiable rules; Flow F depends on that backend change.
+
+### R-363 · Refund frontend Step 0B · DECISION
+- Path: docs/report.md
+- Purpose: Record Test 4 result.
+- Depends on: R-362
+- Used by: Refund status edge case handling.
+- Status: done
+- Notes for Claude: User confirmed refund.failed followed by refund.processed ended as refund_failed. UI must treat refund_failed as terminal and show the support message.
+
+### R-364 · Refund frontend · PLAN
+- Path: rontend/src/constants/orderStatus.js (create), rontend/src/components/shared/StatusBadge.jsx (create), rontend/src/components/shared/RefundDialog.jsx (create), rontend/src/api/orders.api.js and rontend/src/api/customer.api.js (change), rontend/src/pages/customer/OrdersPage.jsx, rontend/src/pages/customer/OrderDetailPage.jsx, rontend/src/pages/admin/OrdersPage.jsx (change)
+- Purpose: Plan for refund/cancellation UI. API: add requestRefund, requestRefundAdmin, retryRefund to orders.api.js; add requestRefund, cancelOrder already exists. Status constants labels/tones. StatusBadge maps status->label/tone. RefundDialog shared. Customer list/detail: badges, cancel dialog, refund dialog, refund-failed message, refresh on focus. Admin table: badges, row action menu (Refund, Retry refund), dialogs, status filter including refund states.
+- Depends on: R-362, R-363
+- Used by: Tasks 2-6
+- Status: open
+- Notes for Claude: Flow F (admin retry) blocked on backend exposing refund_id. Money format rupees two decimals Indian grouping. Every animation respects reduced motion.
+
+### R-365 Task 2 API layer status constants FILE_CHANGED
+- Path: frontend/src/api/customer.api.js, frontend/src/api/orders.api.js, frontend/src/constants/orderStatus.js
+- Purpose: Add requestRefund (customer), requestRefundAdmin, retryRefund (admin); status labels and tones.
+- Depends on: R-364
+- Used by: Tasks 3-5
+- Status: done
+- Notes for Claude: npm run build passed. npm run lint has a pre-existing react-hooks/set-state-in-effect error in frontend/src/pages/admin/OrdersPage.jsx (not introduced by Task 2).
+### R-366 Task 2 API_CALL
+- Path: POST /api/orders/:id/refund, POST /api/orders/admin/:id/refund, POST /api/orders/admin/refunds/:refundId/retry
+- Purpose: Customer refund, admin refund, admin retry.
+- Depends on: R-365
+- Used by: RefundDialog and admin actions
+- Status: done
+- Notes for Claude: Body { reason: string|null }. Success 200 data { refund_id, order_id, status, amount_paise, provider_refund_id }. Errors 404, 409, 502, 403.
+
+### R-367 Task 3 COMPONENT
+- Path: frontend/src/components/shared/StatusBadge.jsx, frontend/src/components/shared/RefundDialog.jsx
+- Purpose: Shared status badge and refund dialog.
+- Depends on: R-365
+- Used by: Tasks 4, 5
+- Status: done
+- Notes for Claude: npm run build passed. Lint errors remain only in pre-existing frontend/src/pages/admin/OrdersPage.jsx effect.
+
+### R-368 Task 4 COMPONENT
+- Path: frontend/src/pages/customer/OrdersPage.jsx, frontend/src/pages/customer/OrderDetailPage.jsx
+- Purpose: Status badges, cancel/refund dialogs, refund-failed message, refresh on focus.
+- Depends on: R-367
+- Used by: customer routes
+- Status: done
+- Notes for Claude: npm run build passed. Lint remaining pre-existing error in admin OrdersPage effect.
+
+### R-369 Task 5 FILE_CHANGED
+- Path: frontend/src/pages/admin/OrdersPage.jsx
+- Purpose: Status badges, Refund and Retry refund actions, admin status filter.
+- Depends on: R-368
+- Used by: admin orders route
+- Status: done
+- Notes for Claude: npm run lint and npm run build passed. Flow F retry depends on backend exposing refund_id (still open).
+### R-370 Task 5 API_CALL
+- Path: POST /api/orders/admin/:id/refund, POST /api/orders/admin/refunds/:refundId/retry
+- Purpose: Admin refund and retry.
+- Depends on: R-369
+- Used by: admin orders page
+- Status: done
+- Notes for Claude: Same contract as customer refund.
+
+### R-371 Task 6 TEST
+- Path: docs/reference/customer/refunds/, docs/reference/admin/refunds/
+- Purpose: Responsive/accessibility pass.
+- Depends on: R-369
+- Used by: refund frontend done criteria
+- Status: done
+- Notes for Claude: npm run lint and npm run build pass. Protected order/admin screens require customer/admin credentials not supplied in this chat; login page smoke-checked at 375px with no horizontal overflow. StatusBadge, RefundDialog, dialogs use keyboard-focusable controls.
+
+### R-372 Backend FILE_CREATED
+- Path: backend/database/procedures/sp_get_latest_refund.sql
+- Purpose: New procedure returning latest refund row for an order.
+- Depends on: R-371
+- Used by: model getLatestRefund
+- Status: done
+- Notes for Claude: Returns refund_id, order_id, status, amount_paise, provider_refund_id, failure_reason, reason, created_at, processed_at.
+### R-373 Backend FILE_CHANGED
+- Path: backend/database/procedures/orders/sp_get_order_detail.sql
+- Purpose: Add fourth result set with latest refund.
+- Depends on: R-372
+- Used by: getOrderDetail model
+- Status: done
+- Notes for Claude: Existing three SELECTs unchanged.
+### R-374 Backend FILE_CHANGED
+- Path: backend/database/procedures/orders/sp_list_all_orders.sql
+- Purpose: Add latest_refund_status and latest_refund_id columns.
+- Depends on: R-372
+- Used by: admin list model
+- Status: done
+- Notes for Claude: Existing columns unchanged.
+### R-375 Backend FILE_CHANGED
+- Path: backend/src/models/order.model.js
+- Purpose: getLatestRefund; getOrderDetail reads fourth result set as refund.
+- Depends on: R-373
+- Used by: services
+- Status: done
+- Notes for Claude: listAllOrders passes through new columns automatically.
+### R-376 Backend FILE_CHANGED
+- Path: backend/src/services/order.service.js
+- Purpose: getOrderDetailService adds refund; retryRefundForOrderService reuses retryRefundService.
+- Depends on: R-375
+- Used by: controllers
+- Status: done
+- Notes for Claude: No Razorpay logic duplicated.
+### R-377 Backend FILE_CHANGED
+- Path: backend/src/controllers/order.controller.js
+- Purpose: retryOrderRefund handler.
+- Depends on: R-376
+- Used by: route
+- Status: done
+- Notes for Claude: Returns 200 Refund retry started.
+### R-378 Backend FILE_CHANGED
+- Path: backend/src/routes/order.route.js
+- Purpose: Add POST /admin/:id/refund/retry.
+- Depends on: R-377
+- Used by: admin clients
+- Status: done
+- Notes for Claude: authenticate + requirePermission(order.refund) + validateOrderIdParam.
+### R-379 Backend DECISION
+- Path: docs/report.md
+- Purpose: Refund retry is by order ID; refund_id exposed read-only.
+- Depends on: R-378
+- Used by: frontend/admin
+- Status: done
+- Notes for Claude: New field refund in order detail; latest_refund_status and latest_refund_id in admin list.
+
+### R-380 Refund button investigation Step A
+- Path: GET /api/orders/14
+- Purpose: Live API status for GX-20261103-E60FC7AD.
+- Depends on: R-379
+- Used by: customer order detail
+- Status: done
+- Notes for Claude: status = paid (exact). Response includes refund field after backend change.
+### R-381 Refund button investigation Step B
+- Path: frontend/src/pages/customer/OrderDetailPage.jsx:83
+- Purpose: Condition check.
+- Depends on: R-380
+- Used by: refund button
+- Status: done
+- Notes for Claude: canRefund = order?.status === 'paid'. Exact match with API status. Result: match.
+### R-382 Refund button investigation Step C
+- Path: frontend/src/pages/customer/OrderDetailPage.jsx:79-81
+- Purpose: Data loading.
+- Depends on: R-381
+- Used by: refund button
+- Status: done
+- Notes for Claude: order stored in result state; StatusBadge renders Paid correctly. Condition is the only gate.
+### R-383 Refund button investigation Step D
+- Path: Playwright 1440px
+- Purpose: DOM check.
+- Depends on: R-382
+- Used by: refund button
+- Status: blocked
+- Notes for Claude: Could not authenticate as customer in this environment; no test credentials available. Button code present in DOM template conditionally.
+### R-384 Refund button investigation Step E
+- Path: browser console
+- Purpose: Errors.
+- Depends on: R-382
+- Used by: refund button
+- Status: done
+- Notes for Claude: No frontend code defect found; status comparison matches. Likely stale client build/cache. No backend change made.

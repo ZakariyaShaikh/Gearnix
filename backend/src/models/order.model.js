@@ -90,12 +90,18 @@ export const listAllOrders = async ({ status, search, limit, offset }) => {
 export const getOrderDetail = async (userId, orderId) => {
     const [rows] = await pool.query('CALL sp_get_order_detail(?, ?)', [userId, orderId]);
 
-    // rows[0] = the order, rows[1] = its items, rows[2] = the latest payment
+    // rows[0] = the order, rows[1] = its items, rows[2] = the latest payment, rows[3] = the latest refund
     return {
         order: rows[0][0] || null,
         items: rows[1],
-        payment: rows[2][0] || null
+        payment: rows[2][0] || null,
+        refund: rows[3] && rows[3][0] ? rows[3][0] : null
     };
+};
+
+export const getLatestRefund = async (orderId) => {
+    const [rows] = await pool.query('CALL sp_get_latest_refund(?)', [orderId]);
+    return rows[0] && rows[0][0] ? rows[0][0] : null;
 };
 
 export const findStaleOrderIds = async (olderThanMinutes) => {
@@ -135,4 +141,34 @@ export const attachRefundProviderId = async (refundId, providerRefundId) => {
     ]);
 
     return rows[0][0];
+};
+
+export const markRefundProcessed = async (providerRefundId, amountPaise) => {
+    const [rows] = await pool.query('CALL sp_mark_refund_processed(?, ?)', [
+        providerRefundId,
+        amountPaise
+    ]);
+
+    return rows[0][0];
+};
+
+export const markRefundFailed = async (providerRefundId, failureReason) => {
+    const [rows] = await pool.query('CALL sp_mark_refund_failed(?, ?)', [
+        providerRefundId,
+        failureReason
+    ]);
+
+    return rows[0][0];
+};
+
+export const claimRefundForRetry = async (refundId) => {
+    const [rows] = await pool.query('CALL sp_claim_refund_for_retry(?)', [refundId]);
+
+    return rows[0][0];
+};
+
+export const releaseRefundClaim = async (refundId) => {
+    const [rows] = await pool.query('CALL sp_release_refund_claim(?)', [refundId]);
+
+    return Number(rows[0][0].released) === 1;
 };

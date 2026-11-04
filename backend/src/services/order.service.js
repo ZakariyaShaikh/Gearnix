@@ -13,10 +13,14 @@ import {
   cancelUnpaidOrder,
   getOrderPayment,
   listOrders,
-  listAllOrders,
   getOrderDetail,
+  getLatestRefund,
   requestOrderRefund,
   attachRefundProviderId,
+  markRefundProcessed,
+  markRefundFailed,
+  claimRefundForRetry,
+  releaseRefundClaim,
 } from "../models/order.model.js";
 import {
   verifyRazorpaySignature,
@@ -60,6 +64,15 @@ const ORDER_ERRORS = {
   REFUND_ALREADY_EXISTS: {
     statusCode: 409,
     message: "A refund already exists for this order",
+  },
+  REFUND_NOT_RETRYABLE: {
+    statusCode: 409,
+    message: "This refund cannot be retried",
+  },
+  REFUND_NOT_FOUND: { statusCode: 404, message: "Refund not found" },
+  REFUND_ALREADY_PROCESSED: {
+    statusCode: 409,
+    message: "This refund is already processed",
   },
 };
 
@@ -229,10 +242,11 @@ const WEBHOOK_SKIP_REASONS = [
   "PAYMENT_NOT_FOUND",
   "AMOUNT_MISMATCH",
   "ORDER_NOT_PAYABLE",
+  "REFUND_NOT_FOUND",
+  "REFUND_ALREADY_PROCESSED",
 ];
 
 export const handleRazorpayWebhookService = async (rawBody, signature) => {
-  // 1. Check the signature against the exact bytes Razorpay sent
   const valid = verifyWebhookSignature({
     body: rawBody,
     signature,
@@ -245,7 +259,6 @@ export const handleRazorpayWebhookService = async (rawBody, signature) => {
     throw error;
   }
 
-  // 2. Parse the event
   let event;
 
   try {
@@ -256,11 +269,22 @@ export const handleRazorpayWebhookService = async (rawBody, signature) => {
     throw error;
   }
 
-  // 3. Only captured payments change anything
-  if (event.event !== "payment.captured") {
-    return { processed: false, reason: "event_ignored", event: event.event };
+  if (event.event === "payment.captured") {
+    return handlePaymentCaptured(event);
   }
 
+  if (event.event === "refund.processed") {
+    return handleRefundProcessed(event);
+  }
+
+  if (event.event === "refund.failed") {
+    return handleRefundFailed(event);
+  }
+
+  return { processed: false, reason: "event_ignored", event: event.event };
+};
+
+const handlePaymentCaptured = async (event) => {
   const payment = event.payload?.payment?.entity;
 
   if (
@@ -273,7 +297,6 @@ export const handleRazorpayWebhookService = async (rawBody, signature) => {
     throw error;
   }
 
-  // 4. Apply it. The procedure is idempotent, so a repeated event is harmless
   try {
     const order = await markOrderPaidByProvider(
       payment.order_id,
@@ -283,38 +306,80 @@ export const handleRazorpayWebhookService = async (rawBody, signature) => {
 
     return { processed: true, order_id: order.order_id, status: order.status };
   } catch (err) {
-    const skipReason = WEBHOOK_SKIP_REASONS.find((key) =>
-      err.sqlMessage?.includes(key),
+    return skipOrThrow(err, {
+      payment_id: payment.id,
+      order_id: payment.order_id,
+      amount: payment.amount,
+    });
+  }
+};
+
+const handleRefundProcessed = async (event) => {
+  const refund = event.payload?.refund?.entity;
+
+  if (!refund?.id || !Number.isInteger(refund?.amount)) {
+    const error = new Error("Webhook payload is missing refund details");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  try {
+    const order = await markRefundProcessed(refund.id, refund.amount);
+
+    return { processed: true, order_id: order.order_id, status: order.status };
+  } catch (err) {
+    return skipOrThrow(err, { refund_id: refund.id, amount: refund.amount });
+  }
+};
+
+const handleRefundFailed = async (event) => {
+  const refund = event.payload?.refund?.entity;
+
+  if (!refund?.id) {
+    const error = new Error("Webhook payload is missing refund details");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const reason =
+    refund.error_description ||
+    refund.error_reason ||
+    "Refund failed at Razorpay";
+
+  try {
+    const order = await markRefundFailed(refund.id, reason);
+
+    return { processed: true, order_id: order.order_id, status: order.status };
+  } catch (err) {
+    return skipOrThrow(err, { refund_id: refund.id });
+  }
+};
+
+// Known problems that retrying can't fix: acknowledge with 200 and log them
+const skipOrThrow = (err, details) => {
+  const reason = WEBHOOK_SKIP_REASONS.find((key) =>
+    err.sqlMessage?.includes(key),
+  );
+
+  if (reason) {
+    console.error("[razorpay webhook] not applied", { reason, ...details });
+
+    return { processed: false, reason: reason.toLowerCase() };
+  }
+
+  if (
+    err.code === "ER_DUP_ENTRY" &&
+    err.sqlMessage?.includes("uq_payments_provider_payment")
+  ) {
+    console.error(
+      "[razorpay webhook] payment already recorded elsewhere",
+      details,
     );
 
-    if (skipReason) {
-      // Money was captured, but the order can't take it. Someone must check it for a refund
-      console.error("[razorpay webhook] not applied", {
-        reason: skipReason,
-        payment_id: payment.id,
-        order_id: payment.order_id,
-        amount: payment.amount,
-      });
-
-      return { processed: false, reason: skipReason.toLowerCase() };
-    }
-
-    // Same payment ID recorded for another order: never fixed by retrying
-    if (
-      err.code === "ER_DUP_ENTRY" &&
-      err.sqlMessage?.includes("uq_payments_provider_payment")
-    ) {
-      console.error(
-        "[razorpay webhook] payment already recorded elsewhere",
-        payment.id,
-      );
-
-      return { processed: false, reason: "payment_already_recorded" };
-    }
-
-    // Anything else is unexpected: let the error reach the controller, so Razorpay retries
-    throw err;
+    return { processed: false, reason: "payment_already_recorded" };
   }
+
+  throw err;
 };
 
 export const listOrdersService = async (userId, { page, limit }) => {
@@ -355,7 +420,7 @@ export const listAllOrdersService = async ({ page, limit, status, search }) => {
 };
 
 export const getOrderDetailService = async (userId, orderId) => {
-  const { order, items, payment } = await getOrderDetail(userId, orderId);
+  const { order, items, payment, refund } = await getOrderDetail(userId, orderId);
 
   // Missing and someone else's orders return the same response
   if (!order) {
@@ -364,54 +429,127 @@ export const getOrderDetailService = async (userId, orderId) => {
     throw error;
   }
 
-  return {
+   return {
     ...order,
     items,
     payment,
+    refund,
   };
 };
 
-export const requestRefundService = async ({ orderId, userId, requestedBy, reason }) => {
-    // Step A: database. Order refund_pending hoga, stock wapas aayega, refund row banegi
-    let refund;
+export const requestRefundService = async ({
+  orderId,
+  userId,
+  requestedBy,
+  reason,
+}) => {
+  // Step A: database. Order refund_pending hoga, stock wapas aayega, refund row banegi
+  let refund;
 
-    try {
-        refund = await requestOrderRefund({ orderId, userId, requestedBy, reason });
-    } catch (err) {
-        throw toOrderError(err);
-    }
+  try {
+    refund = await requestOrderRefund({ orderId, userId, requestedBy, reason });
+  } catch (err) {
+    throw toOrderError(err);
+  }
 
-    // Step B: Razorpay. Yahan external call hai, isliye DB transaction ke bahar
-    try {
-        const providerRefund = await razorpay.payments.refund(refund.provider_payment_id, {
-            amount: refund.amount_paise,
-            speed: 'normal',
-            notes: {
-                order_id: String(refund.order_id),
-                refund_id: String(refund.refund_id)
-            }
-        });
+  // Step B: Razorpay. Yahan external call hai, isliye DB transaction ke bahar
+  try {
+    const providerRefund = await razorpay.payments.refund(
+      refund.provider_payment_id,
+      {
+        amount: refund.amount_paise,
+        speed: "normal",
+        notes: {
+          order_id: String(refund.order_id),
+          refund_id: String(refund.refund_id),
+        },
+      },
+    );
 
-        // Step C: Razorpay ka refund ID save karo, taki webhook use pehchan sake
-        await attachRefundProviderId(refund.refund_id, providerRefund.id);
+    // Step C: Razorpay ka refund ID save karo, taki webhook use pehchan sake
+    await attachRefundProviderId(refund.refund_id, providerRefund.id);
 
-        return {
-            refund_id: refund.refund_id,
-            order_id: refund.order_id,
-            status: 'refund_pending',
-            amount_paise: refund.amount_paise,
-            provider_refund_id: providerRefund.id
-        };
-    } catch (err) {
-        // Refund row 'created' hi rahegi. Retry ka endpoint batch 5 mein aayega
-        console.error('[refund] Razorpay refund call failed', {
-            refund_id: refund.refund_id,
-            order_id: refund.order_id,
-            message: err.message
-        });
+    return {
+      refund_id: refund.refund_id,
+      order_id: refund.order_id,
+      status: "refund_pending",
+      amount_paise: refund.amount_paise,
+      provider_refund_id: providerRefund.id,
+    };
+  } catch (err) {
+    // Refund row 'created' hi rahegi. Retry ka endpoint batch 5 mein aayega
+    console.error("[refund] Razorpay refund call failed", {
+      refund_id: refund.refund_id,
+      order_id: refund.order_id,
+      message: err.message,
+    });
 
-        const error = new Error('Refund could not be started with Razorpay. Please try again later');
-        error.statusCode = 502;
+    const error = new Error(
+      "Refund could not be started with Razorpay. Please try again later",
+    );
+    error.statusCode = 502;
+    throw error;
+  }
+};
+
+export const retryRefundService = async (refundId) => {
+  // Step A: claim. Ek hi caller Razorpay tak jayega
+  let refund;
+
+  try {
+    refund = await claimRefundForRetry(refundId);
+  } catch (err) {
+    throw toOrderError(err);
+  }
+
+  // Step B: Razorpay call
+  try {
+    const providerRefund = await razorpay.payments.refund(
+      refund.provider_payment_id,
+      {
+        amount: refund.amount_paise,
+        speed: "normal",
+        notes: {
+          order_id: String(refund.order_id),
+          refund_id: String(refund.refund_id),
+          retry: "true",
+        },
+      },
+    );
+
+    // Step C: real ID save karo
+    await attachRefundProviderId(refund.refund_id, providerRefund.id);
+
+    return {
+      refund_id: refund.refund_id,
+      order_id: refund.order_id,
+      status: "refund_pending",
+      amount_paise: refund.amount_paise,
+      provider_refund_id: providerRefund.id,
+    };
+  } catch (err) {
+    // Claim wapas lo, taki dobara retry ho sake
+    await releaseRefundClaim(refund.refund_id).catch(() => {});
+
+    console.error("[refund retry] Razorpay call failed", {
+      refund_id: refund.refund_id,
+      message: err.message,
+    });
+
+    const error = new Error(
+      "Refund could not be started with Razorpay. Please try again later",
+    );
+    error.statusCode = 502;
+    throw error;
+  }
+};
+
+export const retryRefundForOrderService = async (orderId) => {
+    const refund = await getLatestRefund(orderId);
+    if (!refund) {
+        const error = new Error("Refund not found");
+        error.statusCode = 404;
         throw error;
     }
+    return retryRefundService(refund.refund_id);
 };

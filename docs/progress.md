@@ -15,3 +15,5 @@ Last updated: 2026-10-30
 
 ## Source of truth
 Use `docs/phases.md` for phase scope and `docs/report.md` for detailed implementation history, decisions, and verification notes. Keep this file as a short current-state summary; do not append repetitive logs.
+- Refund frontend: done (Tasks 1-6). Open question: backend must expose refund_id for admin retry (Flow F).
+- Task 4 (customer order detail): partial pending verification of Request refund button visibility.

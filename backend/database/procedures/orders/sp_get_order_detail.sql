@@ -57,6 +57,24 @@ BEGIN
       AND o.user_id = p_user_id
     ORDER BY p.payment_id DESC
     LIMIT 1;
+
+    -- Result set 4: the latest refund for this order (zero rows if none)
+    SELECT
+        r.refund_id,
+        r.order_id,
+        r.status,
+        r.amount_paise,
+        r.provider_refund_id,
+        r.failure_reason,
+        r.reason,
+        r.created_at,
+        r.processed_at
+    FROM refunds r
+    INNER JOIN orders o ON o.order_id = r.order_id
+    WHERE r.order_id = p_order_id
+      AND o.user_id = p_user_id
+    ORDER BY r.refund_id DESC
+    LIMIT 1;
 END$$
 
 DELIMITER ;

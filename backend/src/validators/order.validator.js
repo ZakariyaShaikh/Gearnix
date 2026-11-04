@@ -131,3 +131,14 @@ export const validateRefundRequest = (req, res, next) => {
 
     next();
 };
+
+export const validateRefundIdParam = (req, res, next) => {
+    const id = Number(req.params.refundId);
+
+    if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ success: false, message: 'Invalid refund ID' });
+    }
+
+    req.params.refundId = id;
+    next();
+};

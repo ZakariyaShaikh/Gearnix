@@ -15,3 +15,16 @@ export async function listAllOrders({ page = 1, limit = 10, status = '', search 
   const response = await apiRequest(`/orders/admin?${params}`)
   return getData(response, 'orders')
 }
+
+export async function requestRefundAdmin(orderId, reason = null) {
+  return getData(await apiRequest(`/orders/admin/${Number(orderId)}/refund`, {
+    method: 'POST',
+    body: { reason: reason || null },
+  }), 'refund')
+}
+
+export async function retryRefund(refundId) {
+  return getData(await apiRequest(`/orders/admin/refunds/${Number(refundId)}/retry`, {
+    method: 'POST',
+  }), 'refund')
+}

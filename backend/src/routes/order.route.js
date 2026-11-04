@@ -8,14 +8,17 @@ import {
     listOrders,
     getOrder,
     requestRefund,
-    requestRefundAdmin
+    requestRefundAdmin,
+    retryRefund,
+    retryOrderRefund
 } from '../controllers/order.controller.js';
 import {
     validateCheckout,
     validateVerifyPayment,
     validateOrderIdParam,
     validateOrderListQuery,
-    validateRefundRequest
+    validateRefundRequest,
+    validateRefundIdParam
 } from '../validators/order.validator.js';
 
 const router = express.Router();
@@ -79,6 +82,24 @@ router.post(
     validateOrderIdParam,
     validateRefundRequest,
     requestRefundAdmin
+);
+
+// Admin retry by order ID: latest refund for the order is retried
+router.post(
+    '/admin/:id/refund/retry',
+    authenticate,
+    requirePermission('order.refund'),
+    validateOrderIdParam,
+    retryOrderRefund
+);
+
+// Admin retry: pehle jo refund Razorpay tak nahi pahuncha, use dobara bhejna
+router.post(
+    '/admin/refunds/:refundId/retry',
+    authenticate,
+    requirePermission('order.refund'),
+    validateRefundIdParam,
+    retryRefund
 );
 
 export default router;

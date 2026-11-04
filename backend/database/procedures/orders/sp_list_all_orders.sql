@@ -29,7 +29,9 @@ BEGIN
         o.user_id,
         u.username,
         u.email,
-        (SELECT COALESCE(SUM(oi.quantity), 0) FROM order_items oi WHERE oi.order_id = o.order_id) AS item_count
+        (SELECT COALESCE(SUM(oi.quantity), 0) FROM order_items oi WHERE oi.order_id = o.order_id) AS item_count,
+        (SELECT r.status FROM refunds r WHERE r.order_id = o.order_id ORDER BY r.refund_id DESC LIMIT 1) AS latest_refund_status,
+        (SELECT r.refund_id FROM refunds r WHERE r.order_id = o.order_id ORDER BY r.refund_id DESC LIMIT 1) AS latest_refund_id
     FROM orders o
     JOIN users u ON u.user_id = o.user_id
     WHERE (p_status IS NULL OR TRIM(p_status) = '' OR o.status = p_status)

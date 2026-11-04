@@ -3,9 +3,10 @@ import {
     verifyPaymentService,
     cancelOrderService,
     listOrdersService,
-    listAllOrdersService,
     getOrderDetailService,
-    requestRefundService
+  requestRefundService,
+  retryRefundService,
+  retryRefundForOrderService
 } from '../services/order.service.js';
 
 const sendError = (res, error) => {
@@ -133,6 +134,32 @@ export const requestRefundAdmin = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: 'Refund requested by admin',
+            data: result
+        });
+    } catch (error) {
+        return sendError(res, error);
+    }
+};
+
+export const retryRefund = async (req, res) => {
+    try {
+        const result = await retryRefundService(req.params.refundId);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Refund retry started',
+            data: result
+        });
+    } catch (error) {
+        return sendError(res, error);
+    }
+};
+export const retryOrderRefund = async (req, res) => {
+    try {
+        const result = await retryRefundForOrderService(req.params.id);
+        return res.status(200).json({
+            success: true,
+            message: "Refund retry started",
             data: result
         });
     } catch (error) {

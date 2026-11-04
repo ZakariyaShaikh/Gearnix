@@ -111,3 +111,10 @@ export async function listOrders({ page = 1, limit = 10 } = {}) {
 export async function getOrder(orderId) {
   return getData(await apiRequest(`/orders/${Number(orderId)}`), 'order')
 }
+
+export async function requestRefund(orderId, reason = null) {
+  return getData(await apiRequest(`/orders/${Number(orderId)}/refund`, {
+    method: 'POST',
+    body: { reason: reason || null },
+  }), 'refund')
+}
