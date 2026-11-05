@@ -4,13 +4,16 @@ import { FiPlus } from 'react-icons/fi'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { listBlogs, updateBlog, getAdminBlog } from '@/api/blogs.api'
+import { listBlogs, updateBlog, getAdminBlog, deleteBlog } from '@/api/blogs.api'
+import { PERMISSIONS } from '@/constants/permissions'
+import { useAuth } from '@/auth/AuthContext'
 import { BlogEditor } from '@/pages/admin/BlogEditor'
 import { formatDate } from '@/utils/media'
 
 const pageLimit = 12
 
 export function BlogsAdminPage() {
+  const { hasPermission } = useAuth()
   const [blogs, setBlogs] = useState([])
   const [pagination, setPagination] = useState(null)
   const [page, setPage] = useState(1)
@@ -77,6 +80,19 @@ export function BlogsAdminPage() {
     try {
       await updateBlog(blog.blog_id, { is_published: !blog.is_published })
       setNotice(blog.is_published ? 'Post unpublished; its published date is retained.' : 'Post published.')
+      await loadBlogs()
+    } catch (requestError) {
+      setError(requestError.message)
+    }
+  }
+
+  async function handleDeleteBlog(blog) {
+    if (!confirm(`Delete "${blog.title}"? This cannot be undone.`)) return
+    setError('')
+    setNotice('')
+    try {
+      await deleteBlog(blog.blog_id)
+      setNotice('Blog post deleted.')
       await loadBlogs()
     } catch (requestError) {
       setError(requestError.message)
@@ -155,6 +171,11 @@ export function BlogsAdminPage() {
                       {blog.is_published ? 'Unpublish' : 'Publish'}
                     </Button>
                     {blog.is_published && <Link to={`/blogs/${blog.slug}`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded-md px-3 text-brand-accent-pink underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent-pink">View</Link>}
+                    {hasPermission(PERMISSIONS.BLOG_DELETE) && (
+                      <Button type="button" variant="outline" onClick={() => handleDeleteBlog(blog)} className="border-red-500/40 text-red-300 hover:bg-red-950/30">
+                        Delete
+                      </Button>
+                    )}
                   </div>
                 </td>
               </tr>

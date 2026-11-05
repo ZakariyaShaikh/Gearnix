@@ -7,7 +7,8 @@ import {
     listProducts,
     getProductDetail,
     deleteProductImage,
-    setPrimaryProductImage
+    setPrimaryProductImage,
+    deleteProduct
 } from '../models/product.model.js';
 import { slugify } from '../utils/slug.utils.js';
 import {
@@ -241,4 +242,30 @@ export const setPrimaryImageService = async (productId, imageId) => {
     }
 
     return images;
+};
+export const deleteProductService = async (productId) => {
+    const existing = await getProductById(productId);
+
+    if (!existing) {
+        const error = new Error('Product not found');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    const result = await deleteProduct(productId);
+    const action = result[0]?.action;
+
+    if (action !== 'deleted' && action !== 'archived') {
+        throw new Error('Product deletion returned an invalid result');
+    }
+
+    if (action === 'deleted') {
+        await Promise.all(
+            result
+                .filter((row) => row.image_url)
+                .map((row) => deleteProductImageFile(row.image_url))
+        );
+    }
+
+    return { action };
 };

@@ -17,6 +17,7 @@ export function OrderDetailPage() {
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState(location.state?.payment === 'success' ? 'Payment verified. Your order is confirmed.' : '')
   const [cancelOpen, setCancelOpen] = useState(false)
+  const [cancelError, setCancelError] = useState('')
   const [refundOpen, setRefundOpen] = useState(false)
   const [refundReason, setRefundReason] = useState('')
   const [refundError, setRefundError] = useState('')
@@ -53,13 +54,19 @@ export function OrderDetailPage() {
   }, [fetchOrder])
 
   async function handleCancel() {
-    setBusy(true); setNotice('')
+    setBusy(true); setNotice(''); setCancelError('')
+    const isPaid = order?.status === 'paid'
     try {
-      const updated = await cancelOrder(Number(id))
-      setResult((current) => ({ ...current, order: { ...current.order, ...updated, status: updated.status || 'cancelled' } }))
-      setNotice('Order cancelled.')
+      if (isPaid) {
+        await requestRefund(Number(id), 'Cancelled by customer')
+        setNotice('Order cancelled. Your refund has started.')
+      } else {
+        await cancelOrder(Number(id))
+        setNotice('Order cancelled')
+      }
       setCancelOpen(false)
-    } catch (error) { setNotice(error.message || 'Unable to cancel this order.') }
+      fetchOrder()
+    } catch (error) { setCancelError(error.message || 'Unable to cancel this order.') }
     finally { setBusy(false) }
   }
 
@@ -79,8 +86,7 @@ export function OrderDetailPage() {
   const order = result.id === id ? result.order : null
   const items = result.id === id ? result.items : []
   const error = result.id === id ? result.error : ''
-  const canCancel = order?.status === 'pending_payment'
-  const canRefund = order?.status === 'paid'
+  const canCancel = order?.status === 'pending_payment' || order?.status === 'paid'
 
   return (
     <section className="mx-auto max-w-4xl space-y-6">
@@ -94,13 +100,15 @@ export function OrderDetailPage() {
             <section className="rounded-xl border border-brand-border-subtle bg-brand-black p-5"><h2 className="font-primary text-xl font-bold">Items</h2><ul className="mt-4 divide-y divide-white/10">{items.map((item, index) => <li key={`${item.product_id}-${index}`} className="flex flex-wrap justify-between gap-3 py-4 first:pt-0 last:pb-0"><div><p className="font-semibold">{item.product_name}</p><p className="mt-1 text-sm text-brand-text-muted">{formatMoney(item.unit_price)} × {item.quantity}</p></div><p className="font-semibold">{formatMoney(item.line_total)}</p></li>)}</ul>{items.length === 0 && <p className="mt-3 text-sm text-brand-text-muted">No item details are available.</p>}</section>
             <section className="rounded-xl border border-brand-border-subtle bg-brand-black p-5"><h2 className="font-primary text-xl font-bold">Shipping address</h2><address className="mt-3 not-italic text-sm leading-6 text-brand-text-muted"><span className="font-semibold text-brand-text-primary">{order.ship_full_name}</span><br />{order.ship_line1}{order.ship_line2 ? `, ${order.ship_line2}` : ''}<br />{order.ship_city}, {order.ship_state} {order.ship_postal_code}<br />{order.ship_country_code === 'IN' ? 'India' : order.ship_country_code}<br />{order.ship_phone}</address></section>
           </div>
-          <aside className="space-y-4 rounded-xl border border-brand-border-subtle bg-brand-black p-5"><h2 className="font-primary text-xl font-bold">Payment</h2><div className="flex justify-between gap-3 text-sm"><span className="text-brand-text-muted">Status</span><span>{statusLabels[order.status] || order.status}</span></div><div className="flex justify-between gap-3 border-t border-white/10 pt-4"><span className="text-brand-text-muted">Subtotal</span><span>{formatMoney(order.subtotal)}</span></div><div className="flex justify-between gap-3 font-bold"><span>Total</span><span>{formatMoney(order.total)}</span></div>{canCancel && <Button type="button" variant="destructive" disabled={busy} onClick={() => setCancelOpen(true)} className="min-h-11 w-full">{busy ? 'Cancelling…' : 'Cancel order'}</Button>}{canRefund && <Button type="button" variant="destructive" disabled={busy} onClick={() => setRefundOpen(true)} className="min-h-11 w-full">Request refund</Button>}<Link to="/products" className="block min-h-11 content-center text-center text-sm text-brand-accent-pink hover:underline">Continue shopping</Link></aside>
+          <aside className="space-y-4 rounded-xl border border-brand-border-subtle bg-brand-black p-5"><h2 className="font-primary text-xl font-bold">Payment</h2><div className="flex justify-between gap-3 text-sm"><span className="text-brand-text-muted">Status</span><span>{statusLabels[order.status] || order.status}</span></div><div className="flex justify-between gap-3 border-t border-white/10 pt-4"><span className="text-brand-text-muted">Subtotal</span><span>{formatMoney(order.subtotal)}</span></div><div className="flex justify-between gap-3 font-bold"><span>Total</span><span>{formatMoney(order.total)}</span></div>{canCancel && <Button type="button" variant="destructive" disabled={busy} onClick={() => { setCancelError(''); setCancelOpen(true) }} className="min-h-11 w-full">{busy ? 'Cancelling…' : 'Cancel order'}</Button>}<Link to="/products" className="block min-h-11 content-center text-center text-sm text-brand-accent-pink hover:underline">Continue shopping</Link></aside>
         </div>
         {cancelOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true">
             <div className="w-full max-w-sm rounded-xl border border-brand-border-subtle bg-brand-black p-6">
               <h2 className="font-primary text-xl font-bold">Cancel this order?</h2>
-              <p className="mt-2 text-sm text-brand-text-muted">Reserved stock will be released.</p>
+              <p className="mt-2 text-sm text-brand-text-muted">{order.status === 'paid' ? 'Your payment will be refunded to your original payment method. Refunds can take several days to appear.' : 'Reserved stock will be released.'}</p>
+              <p className="mt-3 text-sm text-brand-text-muted">{order.order_number} · {formatMoney(order.total)}</p>
+              {cancelError && <p role="alert" className="mt-3 rounded-md border border-red-500/40 bg-red-950/30 p-2 text-sm text-red-200">{cancelError}</p>}
               <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                 <Button type="button" variant="outline" onClick={() => setCancelOpen(false)} disabled={busy} className="min-h-11 border-white/20 text-white">Keep order</Button>
                 <Button type="button" variant="destructive" onClick={handleCancel} disabled={busy} className="min-h-11">{busy ? 'Cancelling…' : 'Cancel order'}</Button>

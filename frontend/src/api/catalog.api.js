@@ -132,3 +132,6 @@ export async function setPrimaryProductImage(productId, imageId) {
     'product images',
   )
 }
+export async function deleteProduct(productId) {
+  return getData(await apiRequest(`/products/${Number(productId)}`, { method: 'DELETE' }), 'product')
+}

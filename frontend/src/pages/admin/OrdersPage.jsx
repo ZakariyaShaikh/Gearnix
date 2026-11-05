@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { listAllOrders, requestRefundAdmin, retryRefund } from '@/api/orders.api'
+import { listAllOrders, requestRefundAdmin, retryRefund, cancelOrderAdmin } from '@/api/orders.api'
 import { formatMoney, formatDateTime } from '@/utils/media'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { RefundDialog } from '@/components/shared/RefundDialog'
@@ -65,6 +65,16 @@ export function OrdersPage() {
     }
   }
 
+async function cancelOrder(order) {
+    if (!confirm(`Cancel order #${order.order_number}? This will restore stock and set status to cancelled.`)) return
+    setError('')
+    try {
+      await cancelOrderAdmin(order.order_id)
+      setOrders((current) => current.map((o) => o.order_id === order.order_id ? { ...o, status: 'cancelled' } : o))
+    } catch (e) {
+      setError(e.message || 'Unable to cancel order.')
+    }
+  }
   return (
     <section className="space-y-6">
       <header>
@@ -128,6 +138,7 @@ export function OrdersPage() {
                 <td className="p-3">
                   {order.status === 'paid' && <Button variant="outline" size="sm" onClick={() => setRefundTarget(order)} className="min-h-9 border-white/20 text-white">Refund</Button>}
                   {order.status === 'refund_failed' && <Button variant="outline" size="sm" onClick={() => handleRetry(order)} className="min-h-9 border-white/20 text-white">Retry refund</Button>}
+{order.status !== 'cancelled' && order.status !== 'refund_pending' && <Button variant="outline" size="sm" onClick={() => cancelOrder(order)} className="min-h-9 border-white/20 text-white">Cancel</Button>}
                 </td>
               </tr>
             ))}

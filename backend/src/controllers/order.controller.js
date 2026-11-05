@@ -3,6 +3,7 @@ import {
     verifyPaymentService,
     cancelOrderService,
     listOrdersService,
+    listAllOrdersService,
     getOrderDetailService,
   requestRefundService,
   retryRefundService,
@@ -46,7 +47,8 @@ export const verifyPayment = async (req, res) => {
 
 export const cancelOrder = async (req, res) => {
     try {
-        const order = await cancelOrderService(req.user.user_id, req.params.id);
+        const isAdmin = req.user.role === 'Super Admin' || req.user.is_admin === true;
+        const order = await cancelOrderService(req.user.user_id, req.params.id, isAdmin);
 
         return res.status(200).json({
             success: true,

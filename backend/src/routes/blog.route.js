@@ -10,7 +10,8 @@ import {
     createBlog,
     updateBlog,
     updateBlogCover,
-    removeBlogCover
+    removeBlogCover,
+    deleteBlog
 } from '../controllers/blog.controller.js';
 import {
     validateBlogIdParam,
@@ -79,6 +80,15 @@ router.delete(
     requirePermission('blog.update'),
     validateBlogIdParam,
     removeBlogCover
+);
+
+// Delete the blog post
+router.delete(
+    '/:id',
+    authenticate,
+    requirePermission('blog.delete'),
+    validateBlogIdParam,
+    deleteBlog
 );
 
 export default router;

@@ -4,10 +4,12 @@ DELIMITER $$
 
 CREATE PROCEDURE sp_cancel_unpaid_order(
     IN p_user_id BIGINT UNSIGNED,
-    IN p_order_id BIGINT UNSIGNED
+    IN p_order_id BIGINT UNSIGNED,
+    IN p_is_admin TINYINT(1) DEFAULT 0
 )
 BEGIN
     DECLARE v_status VARCHAR(30) DEFAULT NULL;
+    DECLARE v_user_is_super_admin TINYINT(1) DEFAULT 0;
 
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
@@ -17,12 +19,33 @@ BEGIN
 
     START TRANSACTION;
 
-    SELECT status
-    INTO v_status
-    FROM orders
-    WHERE order_id = p_order_id
-      AND user_id = p_user_id
-    FOR UPDATE;
+    -- Check if user is super admin
+    SELECT COUNT(*) INTO v_user_is_super_admin
+    FROM users u
+    JOIN role_permissions rp ON rp.role_id = u.role_id
+    JOIN roles r ON r.role_id = rp.role_id
+    WHERE u.user_id = p_user_id
+      AND r.role_name = 'Super Admin';
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    -- Get order status, allowing admin to cancel any order
+    IF p_is_admin = 1 THEN
+        SELECT status INTO v_status
+        FROM orders
+        WHERE order_id = p_order_id
+        FOR UPDATE;
+    ELSE
+        SELECT status INTO v_status
+        FROM orders
+        WHERE order_id = p_order_id
+          AND user_id = p_user_id
+        FOR UPDATE;
+    END IF;
 
     IF v_status IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ORDER_NOT_FOUND';

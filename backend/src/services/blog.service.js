@@ -3,7 +3,8 @@ import {
     updateBlog,
     listBlogs,
     getBlogBySlug,
-    getBlogById
+    getBlogById,
+    deleteBlog
 } from '../models/blog.model.js';
 import { slugify } from '../utils/slug.utils.js';
 import { BLOG_IMAGE_URL_PREFIX, deleteBlogImageFile } from '../utils/file.utils.js';
@@ -168,4 +169,18 @@ export const removeBlogCoverService = async (blogId) => {
     }
 
     return updated;
+};
+export const deleteBlogService = async (blogId) => {
+    const result = await deleteBlog(blogId);
+
+    if (!result || Number(result.deleted) !== 1) {
+        throw notFound();
+    }
+
+    // Delete the cover image file from disk if it was uploaded by us
+    if (result.deleted_cover_image && result.deleted_cover_image.startsWith(BLOG_IMAGE_URL_PREFIX)) {
+        await deleteBlogImageFile(result.deleted_cover_image);
+    }
+
+    return { deleted: true };
 };

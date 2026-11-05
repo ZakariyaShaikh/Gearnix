@@ -221,12 +221,12 @@ export function StoreLayout() {
       const items = cartResult.value?.items
       setCartCount(Array.isArray(items) ? items.reduce((total, item) => total + Number(item.quantity || 0), 0) : 0)
     } else {
-      toast.error(`Could not load cart count: ${cartResult.reason.message}`)
+      setCartCount(0)
     }
     if (wishlistResult.status === 'fulfilled') {
       setWishlistCount(wishlistResult.value.length)
     } else {
-      toast.error(`Could not load wishlist count: ${wishlistResult.reason.message}`)
+      setWishlistCount(0)
     }
   }, [status])
 

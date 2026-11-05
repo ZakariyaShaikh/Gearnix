@@ -10,7 +10,8 @@ import {
     requestRefund,
     requestRefundAdmin,
     retryRefund,
-    retryOrderRefund
+    retryOrderRefund,
+    listAllOrders
 } from '../controllers/order.controller.js';
 import {
     validateCheckout,
@@ -18,7 +19,8 @@ import {
     validateOrderIdParam,
     validateOrderListQuery,
     validateRefundRequest,
-    validateRefundIdParam
+    validateRefundIdParam,
+    validateAdminOrderListQuery
 } from '../validators/order.validator.js';
 
 const router = express.Router();
@@ -29,6 +31,15 @@ router.get(
     requirePermission('order.manage'),
     validateOrderListQuery,
     listOrders
+);
+
+// Admin list all orders: guarded by order.read, placed before /:id so /admin isn't captured as an ID
+router.get(
+    '/admin',
+    authenticate,
+    requirePermission('order.read'),
+    validateAdminOrderListQuery,
+    listAllOrders
 );
 
 router.get(

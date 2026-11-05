@@ -10,7 +10,8 @@ import {
     listAdminProducts,
     getProductDetail,
     deleteProductImage,
-    setPrimaryProductImage
+    setPrimaryProductImage,
+    deleteProduct
 } from '../controllers/product.controller.js';
 import {
     validateCreateProduct,
@@ -89,6 +90,15 @@ router.patch(
     validateProductIdParam,
     validateImageIdParam,
     setPrimaryProductImage
+);
+
+// Delete the product
+router.delete(
+    '/:id',
+    authenticate,
+    requirePermission('product.delete'),
+    validateProductIdParam,
+    deleteProduct
 );
 
 export default router;

@@ -5,7 +5,8 @@ import {
     getPublishedBlogService,
     getBlogByIdService,
     updateBlogCoverService,
-    removeBlogCoverService
+    removeBlogCoverService,
+    deleteBlogService
 } from '../services/blog.service.js';
 
 const sendError = (res, error) => {
@@ -101,6 +102,21 @@ export const removeBlogCover = async (req, res) => {
             success: true,
             message: 'Blog cover removed successfully',
             data: blog
+        });
+    } catch (error) {
+        return sendError(res, error);
+
+    }
+};
+
+export const deleteBlog = async (req, res) => {
+    try {
+        const result = await deleteBlogService(req.params.id);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Blog deleted successfully',
+            data: result
         });
     } catch (error) {
         return sendError(res, error);

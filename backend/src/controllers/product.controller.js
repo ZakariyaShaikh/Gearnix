@@ -5,7 +5,8 @@ import {
     listProductsService,
     getProductDetailService,
     deleteProductImageService,
-    setPrimaryImageService
+    setPrimaryImageService,
+    deleteProductService
 } from '../services/product.service.js';
 
 const sendError = (res, error) => {
@@ -150,6 +151,22 @@ export const setPrimaryProductImage = async (req, res) => {
             success: true,
             message: 'Primary image updated successfully',
             data: images
+        });
+    } catch (error) {
+        return sendError(res, error);
+    }
+};
+
+export const deleteProduct = async (req, res) => {
+    try {
+        const result = await deleteProductService(req.params.id);
+
+        return res.status(200).json({
+            success: true,
+            message: result.action === 'archived'
+                ? 'Product archived to preserve order history'
+                : 'Product deleted successfully',
+            data: result
         });
     } catch (error) {
         return sendError(res, error);

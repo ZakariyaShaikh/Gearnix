@@ -67,3 +67,9 @@ export const getBlogById = async (blogId) => {
 
     return rows[0][0] || null;
 };
+export const deleteBlog = async (blogId) => {
+    const [rows] = await pool.query('CALL sp_delete_blog(?)', [blogId]);
+
+    // rows[0] = the deleted cover image URL
+    return rows[0][0] || null;
+};

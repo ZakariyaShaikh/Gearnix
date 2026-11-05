@@ -151,3 +151,9 @@ export const setPrimaryProductImage = async (productId, imageId) => {
     // One result set: the product's images, primary first
     return rows[0];
 };
+export const deleteProduct = async (productId) => {
+    const [rows] = await pool.query('CALL sp_delete_product(?)', [productId]);
+
+    // rows[0] = the image URLs that were deleted
+    return rows[0] || [];
+};

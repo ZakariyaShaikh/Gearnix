@@ -13,6 +13,7 @@ import {
   cancelUnpaidOrder,
   getOrderPayment,
   listOrders,
+  listAllOrders,
   getOrderDetail,
   getLatestRefund,
   requestOrderRefund,
@@ -229,9 +230,9 @@ export const verifyPaymentService = async (
   }
 };
 
-export const cancelOrderService = async (userId, orderId) => {
+export const cancelOrderService = async (userId, orderId, isAdmin = false) => {
   try {
-    return await cancelUnpaidOrder(userId, orderId);
+    return await cancelUnpaidOrder(userId, orderId, isAdmin);
   } catch (err) {
     throw toOrderError(err);
   }

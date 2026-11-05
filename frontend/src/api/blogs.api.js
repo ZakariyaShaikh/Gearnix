@@ -49,3 +49,7 @@ export async function removeBlogCover(blogId) {
     'blog cover',
   )
 }
+
+export async function deleteBlog(blogId) {
+  return getData(await apiRequest(`/blogs/${Number(blogId)}`, { method: 'DELETE' }), 'blog deletion')
+}

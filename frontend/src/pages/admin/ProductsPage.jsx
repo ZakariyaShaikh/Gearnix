@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   createProduct,
+  deleteProduct,
   deleteProductImage,
   getProduct,
   listCategories,
@@ -326,6 +327,21 @@ export function ProductsPage() {
     }
   }
 
+  async function handleDeleteProduct(product) {
+    if (!confirm(`Delete "${product.name}"? Products with order history will be archived to preserve past orders.`)) return
+    setError('')
+    setNotice('')
+    try {
+      const result = await deleteProduct(product.product_id)
+      setNotice(result.action === 'archived'
+        ? 'Product archived because it has order history.'
+        : 'Product deleted.')
+      await loadProducts()
+    } catch (requestError) {
+      setError(requestError.message)
+    }
+  }
+
   async function handleSaved(message = 'Product saved.') {
     setEditor(null)
     setNotice(message)
@@ -381,6 +397,7 @@ export function ProductsPage() {
                 <td className="p-3"><div className="flex flex-wrap gap-2">
                   {hasPermission(PERMISSIONS.PRODUCT_UPDATE) && <Button variant="outline" onClick={() => productForEdit(product)}>Edit</Button>}
                   {hasPermission(PERMISSIONS.PRODUCT_UPDATE) && <Button variant="outline" onClick={() => toggleVisibility(product)}>{product.is_active ? 'Hide' : 'Show'}</Button>}
+                  {hasPermission(PERMISSIONS.PRODUCT_DELETE) && <Button type="button" variant="outline" onClick={() => handleDeleteProduct(product)}>Delete</Button>}
                 </div></td>
               </tr>
             ))}
